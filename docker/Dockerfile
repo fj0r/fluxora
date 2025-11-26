@@ -25,3 +25,4 @@ COPY manifest /app/manifest
 
 COPY --from=builder /app/target/dx/ui/release/web/public/ /app/static
 COPY --from=builder /app/crates/ui/assets /app/static/assets
+CMD ["/app/gateway"]

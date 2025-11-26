@@ -385,7 +385,6 @@ module chat {
             -v $"($config):/app/chat.toml"
             -w /app
             $image
-            /app/chat
         ]
     }
 
@@ -430,7 +429,6 @@ module gw {
             -e $"GATEWAY_QUEUE_INCOME_BROKER=[($external):19092]"
             -w /app
             $image
-            /app/gateway
         ]
     }
 

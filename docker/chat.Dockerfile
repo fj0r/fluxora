@@ -11,3 +11,4 @@ WORKDIR /app
 COPY --from=builder /app/target/release/chat /app/chat
 COPY chat.toml /app
 COPY manifest /app/manifest
+CMD ["/app/chat"]
