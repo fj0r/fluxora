@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = { workspace = true }
 colored = "3.0.0"
-proc-macro2 = { version = "1.0.103", features = ["span-locations"] }
-quote = "1.0.42"
-syn = { version = "2.0.110", features = ["extra-traits", "full"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+syn = { workspace = true }
 
 [lib]
 proc-macro = true
