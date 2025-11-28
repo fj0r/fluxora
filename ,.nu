@@ -372,14 +372,14 @@ module chat {
     export def 'container up' [
         --external: string@cmpl-external = 'host.docker.internal'
     ] {
-        let image = 'ghcr.io/fj0r/edap:chat'
+        let image = 'ghcr.io/fj0r/fluxora:chat'
         ^$env.CNTRCTL pull $image
         let config = mktemp -t --suffix chat
         open -r chat.toml
         | str replace -a localhost $external
         | save -f $config
         ^$env.CNTRCTL run ...[
-            --name edap-chat
+            --name fluxora-chat
             --rm -it
             -p 3003:3003
             -v $"($config):/app/chat.toml"
@@ -419,10 +419,10 @@ module gw {
     export def 'container up' [
         --external: string@cmpl-external = 'host.docker.internal'
     ] {
-        let image = 'ghcr.io/fj0r/edap:gateway'
+        let image = 'ghcr.io/fj0r/fluxora:gateway'
         ^$env.CNTRCTL pull $image
         ^$env.CNTRCTL run ...[
-            --name edap-gateway
+            --name fluxora-gateway
             --rm -it
             -p 3000:3000
             -e $"GATEWAY_QUEUE_OUTGO_BROKER=[($external):19092]"
@@ -591,7 +591,7 @@ export def 'serve' [
 }
 
 export def 'update images' [] {
-    let images = ['fj0r/edap:gateway', 'fj0r/edap:chat' ]
+    let images = ['fj0r/fluxora:gateway', 'fj0r/fluxora:chat' ]
     for i in $images {
         dpl $"ghcr.lizzie.fun/($i)" --rename $"ghcr.io/($i)"
     }

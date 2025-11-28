@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: fj0r/edap
+  IMAGE_NAME: fj0r/fluxora
 
 
 jobs:
