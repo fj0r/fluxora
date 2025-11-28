@@ -1,4 +1,4 @@
-# event-driven-app-platform
+# Events flow. Intelligence appears.
 
 ```nu
 use ,.nu
