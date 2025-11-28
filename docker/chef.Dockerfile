@@ -3,7 +3,7 @@ FROM rust:1 AS chef
 # it will be cached from the second build onwards
 RUN set -eux \
   ; cargo install cargo-chef \
-  ; cargo install dioxus-cli@0.7.0-rc.1 --force \
+  ; cargo install dioxus-cli \
   ; apt update \
   ; apt-get install -y --no-install-recommends \
         ripgrep cmake \
