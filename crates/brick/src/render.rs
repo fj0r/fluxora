@@ -23,9 +23,8 @@ impl Brick {
                     *self = x;
                 }
                 Err(x) => {
-                    if cfg!(feature = "dioxus") {
-                        dioxus::logger::tracing::info!("{x:?}");
-                    }
+                    #[cfg(feature = "dioxus")]
+                    dioxus::logger::tracing::info!("{x:?}");
                 }
             }
         }
