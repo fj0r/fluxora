@@ -75,9 +75,7 @@ async fn main() -> Result<()> {
                  State(state): State<StateChat<Sender>>| async move {
                     let s = state.config.read().await;
                     let login_with_cookie = s.login_with_cookie;
-                    let login = &s.hooks.get("login").cloned().unwrap()[0];
-                    let logout = s.hooks.get("logout").unwrap()[0].clone();
-                    drop(s);
+                    let login = &s.hooks.get("login").unwrap()[0];
 
                     if login_with_cookie {
                         let cookie: Value = jar.iter().map(|c| (c.name(), c.value())).collect();
@@ -90,6 +88,9 @@ async fn main() -> Result<()> {
                             .body("UNAUTHORIZED".into())
                             .unwrap();
                     };
+
+                    let logout = s.hooks.get("logout").unwrap()[0].clone();
+                    drop(s);
                     ws.on_upgrade(async move |socket| {
                         handle_ws(socket, tx, state, config, tmpls.clone(), &a).await;
                         let _ = logout.handle::<Value>(&a.into(), tmpls.clone()).await;
