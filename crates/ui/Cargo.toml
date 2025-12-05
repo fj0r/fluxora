@@ -7,24 +7,27 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { workspace = true }
-tracing-wasm = { workspace = true }
-dioxus = { workspace = true, features = ["macro", "web"] }
-futures = { workspace = true }
-gloo-net = { workspace = true }
-js-sys = { workspace = true }
-markdown = { workspace = true }
-web-sys = { workspace = true }
-serde_json = { workspace = true }
-itertools = { workspace = true }
-minijinja = { workspace = true }
-serde = { workspace = true, features = ["derive", "serde_derive"] }
-chrono = { workspace = true }
-brick = { path = "../brick", features = ["dioxus", "classify", "merge", "render"] }
-content = { path = "../content" }
-ui_macro = { path = "../ui_macro" }
-maplit = { workspace = true }
-indoc = { workspace = true }
+anyhow.workspace = true
+tracing-wasm.workspace = true
+dioxus.workspace = true
+dioxus.features = ["macro", "web"]
+futures.workspace = true
+gloo-net.workspace = true
+js-sys.workspace = true
+markdown.workspace = true
+web-sys.workspace = true
+serde_json.workspace = true
+itertools.workspace = true
+minijinja.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde.features = ["derive", "serde_derive"]
+brick.path = "../brick"
+brick.features = ["dioxus", "classify", "merge", "render"]
+content.path = "../content"
+ui_macro.path = "../ui_macro"
+maplit.workspace = true
+indoc.workspace = true
 
 [features]
 default = ["web"]
