@@ -9,15 +9,15 @@ edition = "2024"
 [dependencies]
 anyhow = { workspace = true }
 tracing-wasm = "0.2.1"
-dioxus = { version = "0.7.1", features = ["macro", "web"] }
+dioxus = { workspace = true, features = ["macro", "web"] }
 futures = { workspace = true }
 gloo-net = "0.6.0"
-js-sys = "0.3.82"
+js-sys = "0.3.83"
 serde_json = { workspace = true }
 itertools = { workspace = true }
 minijinja = { workspace = true }
 markdown = "1.0.0"
-web-sys = "0.3.82"
+web-sys = "0.3.83"
 serde = { workspace = true, features = ["derive", "serde_derive"] }
 chrono = { workspace = true }
 brick = { path = "../brick", features = ["dioxus", "classify", "merge", "render"] }
