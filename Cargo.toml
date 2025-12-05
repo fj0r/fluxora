@@ -14,7 +14,7 @@ members = [
 ]
 
 [workspace.dependencies]
-dioxus = { version = "0.7.2" }
+dioxus = { version = "=0.7.1" }
 bon = "3.8.1"
 regex = { version = "1" }
 proc-macro2 = { version = "1.0.103", features = ["span-locations"] }
@@ -53,17 +53,7 @@ indexmap = { version = "2.12.1", features = ["serde"] }
 
 tracing-wasm = "0.2.1"
 gloo-net = "0.6.0"
-js-sys = "0.3.82"
+js-sys = "0.3.83"
 markdown = "1.0.0"
-web-sys = "0.3.82"
-
-[profile.wasm-dev]
-inherits = "dev"
-opt-level = 1
-
-[profile.server-dev]
-inherits = "dev"
-
-[profile.android-dev]
-inherits = "dev"
+web-sys = "0.3.83"
 
