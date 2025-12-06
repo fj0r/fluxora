@@ -277,7 +277,7 @@ module ui {
     }
 
     export def build [] {
-        cd ui
+        cd crates/ui
         rm -rf target/dx/ui/release/web/public/
         ^dx build --web --release
         dust target/dx/ui/release/web/public/
@@ -325,7 +325,7 @@ module ui {
         use git/shortcut.nu *
         use lg
         lg level 1 'begin'
-        cp ui/assets/main.css ../ydncf/index.css
+        cp crates/ui/assets/main.css ../ydncf/index.css
         let msg = git-last-commit
         let msg = $"($msg.message)\n\n($msg.body)"
         cd ../ydncf
