@@ -2,11 +2,11 @@
   {
     "action": "tmpl",
     "name": "segment",
-    "data": "{%raw%}{\"children\":[{%for i in range(rank)-%}{\"type\": \"case\"},{%endfor%}{{payload}}],\"id\":\"{{id}}\",{%if kind%}\"attrs\":{\"kind\":\"{{kind}}\"},{%endif%}\"type\":\"case\"}{%endraw%}"
+    "data": "{%raw%}{\"sub\":[{%for i in range(rank)-%}{\"type\": \"case\"},{%endfor%}{{payload}}],\"id\":\"{{id}}\",{%if kind%}\"attrs\":{\"kind\":\"{{kind}}\"},{%endif%}\"type\":\"case\"}{%endraw%}"
   },
   {
     "action": "tmpl",
     "name": "cart",
-    "data": "{\"type\":\"svg\",\"attrs\":{\"height\":\"25px\",\"width\":\"25px\"},\"children\":[{\"type\":\"path\",\"bind\":{\"value\":{\"default\":\"M18 16H8a1 1 0 0 1-.958-.713L4.256 6H3a1 1 0 0 1 0-2h2a1 1 0 0 1 .958.713L6.344 6H21a1 1 0 0 1 .937 1.352l-3 8A1 1 0 0 1 18 16zM9.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z\"}}}]}"
+    "data": "{\"type\":\"svg\",\"attrs\":{\"height\":\"25px\",\"width\":\"25px\"},\"sub\":[{\"type\":\"path\",\"bind\":{\"value\":{\"default\":\"M18 16H8a1 1 0 0 1-.958-.713L4.256 6H3a1 1 0 0 1 0-2h2a1 1 0 0 1 .958.713L6.344 6H21a1 1 0 0 1 .937 1.352l-3 8A1 1 0 0 1 18 16zM9.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z\"}}}]}"
   }
 ]

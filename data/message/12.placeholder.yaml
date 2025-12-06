@@ -8,12 +8,12 @@ data:
   bind:
     value:
       source: cart
-  children:
+  sub:
   - type: render
     name: cart
     data: {}
   - type: case
-    children:
+    sub:
     - type: text
       bind:
         value:

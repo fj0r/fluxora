@@ -3,14 +3,14 @@ event: chat
 data:
   attrs:
     class: [f, col, gap, xxx, md]
-  children:
+  sub:
   - {type: case}
   - {type: case}
   - attrs:
       class: [box, sm, border, round, warn, pointer, highlight, ease]
-    children:
+    sub:
     - attrs: {}
-      children:
+      sub:
       - attrs:
           class: [txt, sm, hint]
           format: md

@@ -4,7 +4,7 @@ data:
   attrs:
     class: [maximize]
   type: case
-  children:
+  sub:
   - type: text
     bind:
       value:
@@ -17,11 +17,11 @@ data:
     attrs:
       horizontal: true
       class: [--body, shrink, border, round]
-    children:
+    sub:
     - type: case
       attrs:
         class: [--leftside, nogrow]
-      children:
+      sub:
       - type: text
         attrs:
           format: md
@@ -41,9 +41,9 @@ data:
     - type: case
       attrs:
         class: [main, shrink]
-      children:
+      sub:
       - type: case
-        children:
+        sub:
         - type: rack
           attrs:
             class: [--message, box, ac-start, gap, scrolly]
@@ -63,7 +63,7 @@ data:
           attrs:
             bottom: '0.2rem'
             left: '1rem'
-          children:
+          sub:
           - type: popup
             attrs:
               class: [--cart, box, border, shadow, primary]
@@ -71,12 +71,12 @@ data:
             bind:
               value:
                 source: cart
-            children:
+            sub:
             - type: render
               name: cart
               data: {}
             - type: case
-              children:
+              sub:
               - type: text
                 bind:
                   value:
@@ -93,11 +93,11 @@ data:
         attrs:
           class: [--input, nogrow, box]
           horizontal: true
-        children:
+        sub:
         - type: case
           attrs:
             horizontal: true
-          children:
+          sub:
           - type: input
             bind:
               value:

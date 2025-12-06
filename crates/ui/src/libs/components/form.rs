@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use super::super::store::Status;
 use super::{Dynamic, Frame};
-use brick::{Bind, BindVariant, Brick, BrickProps, Case, CaseAttr, Form, FormAttr, JsType};
+use brick::{Bind, BindVariant, Brick, BrickOps, Case, CaseAttr, Form, FormAttr, JsType};
 use dioxus::prelude::*;
 use maplit::hashmap;
 use serde::{Deserialize, Serialize};
@@ -78,7 +78,7 @@ fn walk(brick: &mut Brick, scope: &mut FormScope, confirm: Signal<Value>) {
         }
         _ => {}
     };
-    if let Some(children) = &mut brick.borrow_children_mut() {
+    if let Some(children) = &mut brick.borrow_sub_mut() {
         for c in children.iter_mut() {
             walk(c, scope, confirm);
         }
@@ -103,7 +103,7 @@ pub fn form_(id: Option<String>, brick: Form, children: Element) -> Element {
     let mut brick = Brick::form(brick);
     walk(&mut brick, &mut data, confirm);
     let v = Vec::new();
-    let children = brick.borrow_children().unwrap_or(&v);
+    let children = brick.borrow_sub().unwrap_or(&v);
     let children = children.iter().map(|c| {
         rsx! {
             Frame { brick: c.clone() }
@@ -144,10 +144,7 @@ pub fn form_(id: Option<String>, brick: Form, children: Element) -> Element {
     };
 
     if let Brick::form(Form {
-        id,
-        attrs,
-        children: c,
-        ..
+        id, attrs, sub: c, ..
     }) = &brick
     {
         let brick = Brick::case(Case {
@@ -156,7 +153,7 @@ pub fn form_(id: Option<String>, brick: Form, children: Element) -> Element {
                 class: class.clone(),
                 ..Default::default()
             }),
-            children: c.clone(),
+            sub: c.clone(),
             ..Default::default()
         });
         rsx! {

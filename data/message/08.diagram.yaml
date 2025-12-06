@@ -2,7 +2,7 @@ action: join
 event: chat
 data:
   type: case
-  children:
+  sub:
   - type: diagram
     bind:
       value:

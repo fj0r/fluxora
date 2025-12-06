@@ -1,13 +1,13 @@
 action: join
 data:
-  children:
+  sub:
   #- {type: text, attrs: {class: [txt, md, hint],format: 'md'},value: ''}
   #- {type: text, attrs: {format: 'md'},value: ''}
   - {type: case}
   - {type: case}
   - attrs:
       class: [gap, md]
-    children:
+    sub:
     - attrs:
         class: [ai-center, box, border]
       type: text
@@ -16,35 +16,35 @@ data:
           default: confirm order
     - attrs:
         class: [gap, md]
-      children:
-      - children:
-        - children:
-          - children:
-            - children:
+      sub:
+      - sub:
+        - sub:
+          - sub:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: ''
               type: th
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: ''
               type: th
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: Name
               type: th
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: Price
               type: th
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
@@ -52,9 +52,9 @@ data:
               type: th
             type: tr
           type: thead
-        - children:
-          - children:
-            - children:
+        - sub:
+          - sub:
+            - sub:
               - bind:
                   value:
                     default: 1
@@ -62,7 +62,7 @@ data:
                     type: number
                 type: input
               type: td
-            - children:
+            - sub:
               - attrs:
                   desc: '853736'
                   height: 2em
@@ -71,27 +71,27 @@ data:
                   value:
                     default: https://i.xinminghui.com/goods/202302/source_img/202302270408590.JPG
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: Honeywell 901 Mask Headband Color Box
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: 2.25
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: Efficient filtration, headband design, comfortable to wear
               type: td
             type: tr
-          - children:
-            - children:
+          - sub:
+            - sub:
               - bind:
                   value:
                     default: 1
@@ -99,7 +99,7 @@ data:
                     type: number
                 type: input
               type: td
-            - children:
+            - sub:
               - attrs:
                   desc: '56459'
                   height: 2em
@@ -108,27 +108,27 @@ data:
                   value:
                     default: https://i.xinminghui.com/goods/202103/source_img/20210318040905696.jpg
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: TECHGONG Medical Disposable Mask
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: 0.31
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: Medical grade protection, disposable use, convenient and hygienic
               type: td
             type: tr
-          - children:
-            - children:
+          - sub:
+            - sub:
               - bind:
                   value:
                     default: 1
@@ -136,7 +136,7 @@ data:
                     type: number
                 type: input
               type: td
-            - children:
+            - sub:
               - attrs:
                   desc: '934900'
                   height: 2em
@@ -145,19 +145,19 @@ data:
                   value:
                     default: https://i.xinminghui.com/goods/202501/source_img/202501150324492.png
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: Simei Jia Disposable Activated Carbon Mask
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:
                     default: 33.83
               type: td
-            - children:
+            - sub:
               - type: text
                 bind:
                   value:

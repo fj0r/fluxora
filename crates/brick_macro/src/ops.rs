@@ -12,14 +12,14 @@ pub fn impl_brick_ops(ast: &DeriveInput) -> syn::Result<TokenStream2> {
         quote! { &None }
     };
 
-    let mut child_ref = quote! { None };
-    let mut child_mut = quote! { None };
-    let mut set_child = quote! {};
+    let mut sub_ref = quote! { None };
+    let mut sub_mut = quote! { None };
+    let mut set_sub = quote! {};
 
     if struct_has_field(ast, "sub") {
-        child_ref = quote! { self.sub.as_ref() };
-        child_mut = quote! { self.sub.as_mut() };
-        set_child = quote! { self.sub = Some(brick); };
+        sub_ref = quote! { self.sub.as_ref() };
+        sub_mut = quote! { self.sub.as_mut() };
+        set_sub = quote! { self.sub = Some(brick); };
     };
 
     let mut attrs_ref = quote! { None };
@@ -45,13 +45,13 @@ pub fn impl_brick_ops(ast: &DeriveInput) -> syn::Result<TokenStream2> {
                 stringify!(#name)
             }
             fn borrow_sub(&self) -> Option<&Vec<Brick>> {
-                #child_ref
+                #sub_ref
             }
             fn borrow_sub_mut(&mut self) -> Option<&mut Vec<Brick>> {
-                #child_mut
+                #sub_mut
             }
             fn set_sub(&mut self, brick: Vec<Brick>) {
-                #set_child
+                #set_sub
             }
             fn borrow_attrs(&self) -> Option<&dyn Classify> {
                 #attrs_ref

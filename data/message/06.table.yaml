@@ -2,21 +2,21 @@ action: join
 data:
   attrs:
     class: [gap, md]
-  children:
+  sub:
   - type: text
     bind:
       value:
         default: confirm order
   - attrs:
       class: [gap, md]
-    children:
-    - children:
+    sub:
+    - sub:
       - type: thead
-        children:
+        sub:
         - type: tr
-          children:
+          sub:
           - type: th
-            children:
+            sub:
             - type: image
               attrs:
                   desc: ccacc
@@ -25,33 +25,33 @@ data:
                 value:
                   default: https://github.com/luser/keep-calm-and-call-clone/blob/master/keep-calm-and-call-clone.png?raw=true
           - type: th
-            children:
+            sub:
             - type: text
               bind:
                 value:
                   default: b
           - type: th
-            children:
+            sub:
             - type: text
               bind:
                 value:
                   default: c
           - type: th
-            children:
+            sub:
             - type: text
               bind:
                 value:
                   default: d
           - type: th
-            children:
+            sub:
             - type: text
               bind:
                 value:
                   default: e
       - type: tbody
-        children:
-        - children:
-          - children:
+        sub:
+        - sub:
+          - sub:
             - bind:
                 value:
                   default: '853736'
@@ -63,33 +63,33 @@ data:
                       c: 2
               type: input
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: a1
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: 2.25
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: a2
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: a3
             type: td
           type: tr
-        - children:
-          - children:
+        - sub:
+          - sub:
             - bind:
                 value:
                   default: false
@@ -97,33 +97,33 @@ data:
                   type: bool
               type: input
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: b1
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: 0.31
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: b2
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: b3
             type: td
           type: tr
-        - children:
-          - children:
+        - sub:
+          - sub:
             - bind:
                 value:
                   default: 9
@@ -131,25 +131,25 @@ data:
                   type: number
               type: input
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: c1
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: 33.83
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:
                   default: c2
             type: td
-          - children:
+          - sub:
             - type: text
               bind:
                 value:

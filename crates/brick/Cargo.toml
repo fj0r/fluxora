@@ -18,9 +18,9 @@ brick_macro = { path = "../brick_macro", optional = true }
 dioxus = ["dep:dioxus"]
 schema = ["dep:schemars"]
 classify = ["dep:regex", "dep:brick_macro"]
-props = ["dep:brick_macro"]
-merge = ["props"]
-render = ["props"]
+ops = ["dep:brick_macro"]
+merge = ["ops"]
+render = ["ops"]
 scratch = ["dep:maplit"]
 
 [[example]]

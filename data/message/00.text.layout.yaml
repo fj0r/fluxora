@@ -5,13 +5,13 @@ data:
   attrs:
     horizontal: true
     class: [box]
-  children:
+  sub:
     - type: case
-      children:
+      sub:
         - type: case
           attrs:
             class: [box, border, shadow]
-          children:
+          sub:
             - type: text
               bind:
                 value:
@@ -31,22 +31,22 @@ data:
             attrs:
               class: [box, border, shadow]
     - type: case
-      children:
+      sub:
         - type: text
           bind:
             value:
               default: lv 1
               source: test-data
         - type: case
-          children:
+          sub:
             - type: text
               bind:
                 value:
                   default: lv 2
             - type: case
-              children:
+              sub:
                 - type: case
-                  children:
+                  sub:
                 - type: text
                   bind:
                     value:

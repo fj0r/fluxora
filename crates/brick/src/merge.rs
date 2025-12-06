@@ -1,5 +1,5 @@
 use super::{Bind, Brick};
-use crate::BrickProps;
+use crate::BrickOps;
 use itertools::{
     EitherOrBoth::{Both, Left, Right},
     Itertools,
@@ -12,11 +12,11 @@ use std::fmt::Debug;
 impl Brick {
     pub fn merge(&mut self, op: &(impl BrickOp + ?Sized), rhs: &mut Self) {
         op.merge(self, rhs);
-        if let Some(rchildren) = rhs.borrow_children_mut() {
-            if let Some(children) = &mut self.borrow_children_mut() {
-                let children: Vec<_> = children
+        if let Some(rsub) = rhs.borrow_sub_mut() {
+            if let Some(sub) = &mut self.borrow_sub_mut() {
+                let sub: Vec<_> = sub
                     .iter_mut()
-                    .zip_longest(rchildren)
+                    .zip_longest(rsub)
                     .map(|x| match x {
                         Both(l, r) => {
                             l.merge(op, r);
@@ -26,9 +26,9 @@ impl Brick {
                         Right(r) => r.clone(),
                     })
                     .collect();
-                self.set_children(children);
+                self.set_sub(sub);
             } else {
-                self.set_children(rchildren.clone());
+                self.set_sub(rsub.clone());
             }
         }
     }

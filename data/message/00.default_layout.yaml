@@ -4,12 +4,12 @@ data:
   attrs:
     class: [maximize]
   type: case
-  children:
+  sub:
   - type: case
     attrs:
         horizontal: true
         class: [nogrow]
-    children:
+    sub:
       - type: text
         bind:
           value:
@@ -22,7 +22,7 @@ data:
         bind:
           value:
             event: login
-        children:
+        sub:
           - type: button
             bind:
               value:
@@ -47,11 +47,11 @@ data:
     attrs:
       class: [nogrow, box]
       horizontal: true
-    children:
+    sub:
     - type: case
       attrs:
         horizontal: true
-      children:
+      sub:
       - type: input
         bind:
           value:

@@ -8,7 +8,7 @@
       ]
     },
     "type": "case",
-    "children": [
+    "sub": [
       {
         "type": "text",
         "bind": {
@@ -84,13 +84,13 @@
           ],
           "horizontal": true
         },
-        "children": [
+        "sub": [
           {
             "type": "case",
             "attrs": {
               "horizontal": true
             },
-            "children": [
+            "sub": [
               {
                 "type": "input",
                 "bind": {

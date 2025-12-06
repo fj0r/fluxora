@@ -6,7 +6,7 @@ data:
   id: ""
   attrs:
     class: [f, col, gap, xxx, md]
-  children:
+  sub:
   - type: text
     attrs:
       format: md

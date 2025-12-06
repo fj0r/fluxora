@@ -1,5 +1,5 @@
 use crate::libs::hooks::use_default;
-use brick::{Bind, BindVariant, BrickProps, Button, ButtonAttr};
+use brick::{Bind, BindVariant, BrickOps, Button, ButtonAttr};
 use dioxus::prelude::*;
 use serde_json::{Value, to_value};
 

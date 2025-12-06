@@ -10,8 +10,8 @@ use classify::Classify;
 pub mod merge;
 #[cfg(feature = "render")]
 pub mod render;
-#[cfg(feature = "props")]
-use brick_macro::BrickProps;
+#[cfg(feature = "ops")]
+use brick_macro::BrickOps;
 #[cfg(feature = "classify")]
 use brick_macro::{ClassifyAttrs, ClassifyBrick, ClassifyVariant};
 
@@ -20,12 +20,12 @@ use serde_json::{Map, Value, to_value};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-#[cfg(feature = "props")]
-pub trait BrickProps {
+#[cfg(feature = "ops")]
+pub trait BrickOps {
     fn get_type(&self) -> &str;
-    fn borrow_children(&self) -> Option<&Vec<Brick>>;
-    fn borrow_children_mut(&mut self) -> Option<&mut Vec<Brick>>;
-    fn set_children(&mut self, brick: Vec<Brick>);
+    fn borrow_sub(&self) -> Option<&Vec<Brick>>;
+    fn borrow_sub_mut(&mut self) -> Option<&mut Vec<Brick>>;
+    fn set_sub(&mut self, brick: Vec<Brick>);
     fn borrow_attrs(&self) -> Option<&dyn Classify>;
     fn borrow_attrs_mut(&mut self) -> Option<&mut dyn Classify>;
     fn get_bind(&self) -> Option<&HashMap<String, Bind>>;
@@ -33,7 +33,7 @@ pub trait BrickProps {
     fn get_id(&self) -> &Option<String>;
 }
 
-#[cfg(feature = "props")]
+#[cfg(feature = "ops")]
 pub trait Wrap {
     type Target;
     fn wrap(self) -> Self::Target;
@@ -131,7 +131,7 @@ pub struct Bind {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct ClassAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -142,7 +142,7 @@ pub struct ClassAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct SizeAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -175,7 +175,7 @@ pub enum PosV {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct PositionAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -199,7 +199,7 @@ pub enum Direction {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct DirectionAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -212,7 +212,7 @@ pub struct DirectionAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct StyleAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -225,7 +225,7 @@ pub struct StyleAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Placeholder {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -235,13 +235,13 @@ pub struct Placeholder {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Chart {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -255,7 +255,7 @@ pub struct Chart {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Diagram {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -269,7 +269,7 @@ pub struct Diagram {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Float {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -279,13 +279,13 @@ pub struct Float {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct FoldAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -300,7 +300,7 @@ pub struct FoldAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Fold {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -310,7 +310,7 @@ pub struct Fold {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub item: Option<Vec<Brick>>,
 }
@@ -318,7 +318,7 @@ pub struct Fold {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct FormAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -331,7 +331,7 @@ pub struct FormAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Form {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -341,13 +341,13 @@ pub struct Form {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Popup {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -357,13 +357,13 @@ pub struct Popup {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Svg {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -373,13 +373,13 @@ pub struct Svg {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Group {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -389,12 +389,12 @@ pub struct Group {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Path {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -408,7 +408,7 @@ pub struct Path {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct RackAttr {
     #[serde(default)]
     pub scroll: bool,
@@ -421,7 +421,7 @@ pub struct RackAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Rack {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -431,7 +431,7 @@ pub struct Rack {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub item: Option<Vec<Brick>>,
 }
@@ -439,7 +439,7 @@ pub struct Rack {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct ButtonAttr {
     #[serde(default)]
     pub oneshot: bool,
@@ -452,7 +452,7 @@ pub struct ButtonAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Button {
     pub id: Option<String>,
@@ -465,7 +465,7 @@ pub struct Button {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct ImageAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -484,7 +484,7 @@ pub struct ImageAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Image {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -498,7 +498,7 @@ pub struct Image {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Input {
     pub id: Option<String>,
@@ -511,7 +511,7 @@ pub struct Input {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Select {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -521,85 +521,85 @@ pub struct Select {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Table {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Thead {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Tbody {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Tr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Th {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Td {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct TextAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -612,7 +612,7 @@ pub struct TextAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Text {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -626,7 +626,7 @@ pub struct Text {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct TextArea {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -640,7 +640,7 @@ pub struct TextArea {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(any(feature = "props", feature = "classify"), derive(ClassifyAttrs))]
+#[cfg_attr(any(feature = "ops", feature = "classify"), derive(ClassifyAttrs))]
 pub struct CaseAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class: Option<Vec<String>>,
@@ -656,7 +656,7 @@ pub struct CaseAttr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Case {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -666,13 +666,13 @@ pub struct Case {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bind: Option<HashMap<String, Bind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Brick>>,
+    pub sub: Option<Vec<Brick>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "dioxus", derive(Props))]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyBrick))]
 pub struct Render {
     name: String,
@@ -682,7 +682,7 @@ pub struct Render {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[cfg_attr(feature = "props", derive(BrickProps))]
+#[cfg_attr(feature = "ops", derive(BrickOps))]
 #[cfg_attr(feature = "classify", derive(ClassifyVariant))]
 #[serde(tag = "type")]
 pub enum Brick {
@@ -719,7 +719,7 @@ pub enum Brick {
     render(Render),
 }
 
-#[cfg(feature = "props")]
+#[cfg(feature = "ops")]
 impl Brick {
     pub fn cmp_id(&self, other: &Self) -> bool {
         let Some(id) = self.get_id() else {
