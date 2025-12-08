@@ -1,7 +1,7 @@
 use super::ws::{WebSocketHandle, use_web_socket};
 use anyhow::Result;
 use brick::{
-    Brick, BrickProps,
+    Brick, BrickOps,
     merge::{BrickOp, Concat, Delete, Replace},
 };
 use content::{Content, Message, Method, Outflow};

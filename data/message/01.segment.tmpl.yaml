@@ -1,4 +1,4 @@
 action: tmpl
 name: segment
 data: |-
-    {"children":[{%for i in range(rank)-%}{"type":"case"},{%endfor%}{{payload}}],"id":"{{id}}",{%if kind%}"attrs":{"kind":"{{kind}}"},{%endif%}"type":"case"}
+    {"sub":[{%for i in range(rank)-%}{"type":"case"},{%endfor%}{{payload}}],"id":"{{id}}",{%if kind%}"attrs":{"kind":"{{kind}}"},{%endif%}"type":"case"}

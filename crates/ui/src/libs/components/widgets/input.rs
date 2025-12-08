@@ -1,6 +1,6 @@
 use super::super::super::store::Status;
 use crate::libs::hooks::use_common_css;
-use brick::{Bind, BindVariant, Brick, BrickProps, Input, JsType, Text};
+use brick::{Bind, BindVariant, Brick, BrickOps, Input, JsType, Text};
 use dioxus::prelude::*;
 use maplit::hashmap;
 use serde_json::{Value, to_value};

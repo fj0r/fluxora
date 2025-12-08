@@ -2,7 +2,7 @@ action: create
 event: ''
 data:
   type: case
-  children:
+  sub:
     - type: case
       attrs:
         class: [box, border, shadow]

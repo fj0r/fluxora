@@ -1,6 +1,6 @@
 use crate::libs::components::Frame;
 use crate::libs::hooks::{use_common_css, use_source_list, use_source_value, use_target_value};
-use brick::{BrickProps, Select, classify::Classify};
+use brick::{BrickOps, Select, classify::Classify};
 use dioxus::prelude::*;
 use serde_json::{Value, to_value};
 use std::rc::Rc;

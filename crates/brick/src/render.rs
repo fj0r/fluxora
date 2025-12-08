@@ -1,5 +1,5 @@
 use super::Brick;
-use crate::BrickProps;
+use crate::BrickOps;
 use minijinja::Environment;
 
 impl Brick {
@@ -28,7 +28,7 @@ impl Brick {
                 }
             }
         }
-        if let Some(cs) = self.borrow_children_mut() {
+        if let Some(cs) = self.borrow_sub_mut() {
             for c in cs {
                 c.render(env);
             }

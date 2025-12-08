@@ -289,7 +289,7 @@ module ui {
                 sleep 0.2sec
                 send 00.chat.layout.yaml -p {
                     data: {
-                        children: [
+                        sub: [
                             {},
                             {item:
                                 [

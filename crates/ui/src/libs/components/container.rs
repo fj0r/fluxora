@@ -1,7 +1,7 @@
 use crate::libs::components::Frame;
 use crate::libs::hooks::use_common_css;
 use crate::libs::store::Status;
-use brick::{Bind, BindVariant, BrickProps, Case, CaseAttr, Placeholder};
+use brick::{Bind, BindVariant, BrickOps, Case, CaseAttr, Placeholder};
 use dioxus::prelude::*;
 
 #[component]

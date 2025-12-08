@@ -72,11 +72,11 @@ fn gen_match(ast: &syn::File, entry: &str, object: &str) -> syn::Result<TokenStr
         let has_child = info
             .get(&x.r#type)
             .ok_or(syn::Error::new(Span::call_site(), "get child failed"));
-        let Ok(CompInfo::Struct { name: _, has_child }) = has_child else {
+        let Ok(CompInfo::Struct { name: _, has_sub }) = has_child else {
             // return Err(syn::Error::new(Span::call_site(), "no child"));
             panic!("no child")
         };
-        let children = if *has_child {
+        let children = if *has_sub {
             quote! {
                 {children}
             }

@@ -7,6 +7,6 @@ use dioxus::prelude::*;
 use layout::Layout;
 
 #[component]
-pub fn X(layout: Layout, children: Element) -> Element {
+pub fn X(layout: Layout, sub: Element) -> Element {
     rsx!()
 }

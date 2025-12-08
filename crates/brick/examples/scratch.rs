@@ -6,7 +6,7 @@ use std::fs::read_to_string;
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let a = Brick::case(Case {
-        children: Some(vec![
+        sub: Some(vec![
             Brick::text(Text {
                 attrs: Some(TextAttr {
                     format: Some("md".to_string()),

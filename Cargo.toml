@@ -14,7 +14,7 @@ members = [
 ]
 
 [workspace.dependencies]
-dioxus = { version = "0.7.1" }
+dioxus = { version = "0.7.2" }
 bon = "3.8.1"
 regex = { version = "1" }
 proc-macro2 = { version = "1.0.103", features = ["span-locations"] }

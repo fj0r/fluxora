@@ -2,7 +2,7 @@ use super::super::store::Status;
 use super::{Dynamic, Frame};
 use crate::libs::hooks::{use_common_css, use_source_id};
 use brick::classify::Classify;
-use brick::{Brick, BrickProps, Rack, RackAttr};
+use brick::{Brick, BrickOps, Rack, RackAttr};
 use dioxus::{CapturedError, prelude::*};
 use std::collections::hash_map::HashMap;
 

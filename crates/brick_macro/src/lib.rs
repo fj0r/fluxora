@@ -1,11 +1,11 @@
 mod classify;
-mod props;
+mod ops;
 mod utils;
 
 use classify::{impl_classify_attrs, impl_classify_brick, impl_classify_variant};
+use ops::{impl_brick_ops, impl_brick_ops_variant, impl_brick_wrap_variant};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use props::{impl_brick_props, impl_brick_props_variant, impl_brick_wrap_variant};
 use syn::{Data, DeriveInput, parse_macro_input};
 
 fn into_ts(result: syn::Result<TokenStream2>) -> TokenStream {
@@ -27,19 +27,16 @@ pub fn brick_wrap(input: TokenStream) -> TokenStream {
     }
 }
 
-#[proc_macro_derive(BrickProps, attributes(render_brick))]
+#[proc_macro_derive(BrickOps, attributes(render_brick))]
 pub fn brick_props(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     match ast.data {
-        Data::Struct(_) => into_ts(impl_brick_props(&ast)),
-        Data::Enum(_) => into_ts(impl_brick_props_variant(&ast)),
-        _ => syn::Error::new(
-            ast.ident.span(),
-            "BrickProps only supports structs and enums",
-        )
-        .to_compile_error()
-        .into(),
+        Data::Struct(_) => into_ts(impl_brick_ops(&ast)),
+        Data::Enum(_) => into_ts(impl_brick_ops_variant(&ast)),
+        _ => syn::Error::new(ast.ident.span(), "BrickOps only supports structs and enums")
+            .to_compile_error()
+            .into(),
     }
 }
 
@@ -161,7 +158,7 @@ mod test_macro {
 
         //let output = impl_classify_attrs(input.clone()).unwrap();
         let ast = syn::parse2::<DeriveInput>(input).unwrap();
-        let output = impl_brick_props(&ast).expect("Macro expansion failed");
+        let output = impl_brick_ops(&ast).expect("Macro expansion failed");
 
         let _ = std::fs::write("../data/out.ast", format!("{:#?}", ast));
         let _ = std::fs::write("../data/out.rs", format!("{:#}", output.to_string()));

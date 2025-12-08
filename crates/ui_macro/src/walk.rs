@@ -13,7 +13,7 @@ pub struct Field {
 
 #[derive(Debug)]
 pub enum CompInfo {
-    Struct { name: String, has_child: bool },
+    Struct { name: String, has_sub: bool },
     Enum { fields: Vec<Field> },
 }
 
@@ -27,10 +27,10 @@ pub fn walk(ast: &syn::File) -> HashMap<String, CompInfo> {
     ast.items.iter().fold(HashMap::new(), |mut acc, x| {
         match x {
             syn::Item::Struct(x) => {
-                let has_child = struct_has_field(x, "children");
+                let has_sub = struct_has_field(x, "sub");
                 let info = CompInfo::Struct {
                     name: x.ident.to_string(),
-                    has_child,
+                    has_sub,
                 };
                 acc.insert(x.ident.to_string(), info);
             }

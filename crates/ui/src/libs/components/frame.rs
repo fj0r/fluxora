@@ -1,12 +1,12 @@
 use super::Dynamic;
-use brick::{Brick, BrickProps};
+use brick::{Brick, BrickOps};
 use dioxus::prelude::*;
 
 #[component]
 pub fn Frame(brick: Brick) -> Element {
-    let children = brick.borrow_children();
-    if let Some(children) = children {
-        let children = children.iter().map(|c| {
+    let sub = brick.borrow_sub();
+    if let Some(sub) = sub {
+        let sub = sub.iter().map(|c| {
             rsx! {
                 Frame { brick: c.clone() }
             }
@@ -15,7 +15,7 @@ pub fn Frame(brick: Brick) -> Element {
         rsx! {
             Dynamic {
                 brick: brick.clone(),
-                {children}
+                {sub}
             }
         }
     } else {
