@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
-colored = "3.0.0"
 quote = { workspace = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true }
