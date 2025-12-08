@@ -278,9 +278,9 @@ module ui {
 
     export def build [] {
         cd crates/ui
-        rm -rf target/dx/ui/release/web/public/
+        rm -rf .../target/dx/ui/release/web/public/
         ^dx build --web --release
-        dust target/dx/ui/release/web/public/
+        dust .../target/dx/ui/release/web/public/
     }
 
     export def 'border flashing' [] {
