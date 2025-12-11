@@ -4,37 +4,37 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { workspace = true }
-axum = { workspace = true }
-figment = { workspace = true }
-futures = { workspace = true }
+anyhow.workspace = true
+axum.workspace = true
+figment.workspace = true
+futures.workspace = true
 minijinja = { workspace = true, features = ["loader"] }
-serde = { workspace = true }
-serde_derive = { workspace = true }
-serde_json = { workspace = true }
-serde_with = { workspace = true }
-short-uuid = { workspace = true }
+serde.workspace = true
+serde_derive.workspace = true
+serde_json.workspace = true
+serde_with.workspace = true
+short-uuid.workspace = true
 sqlx = { workspace = true, features = ["chrono", "postgres", "runtime-tokio"] }
-chrono = { workspace = true }
-reqwest = { workspace = true }
-thiserror = { workspace = true }
-tokio = { workspace = true }
-tracing = { workspace = true }
-tracing-serde = { workspace = true }
-tracing-subscriber = { workspace = true }
-kafka = { path = "../kafka" }
+chrono.workspace = true
+reqwest.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-serde.workspace = true
+tracing-subscriber.workspace = true
+kafka.path = "../kafka"
 refinery = { workspace = true, features = ["tokio-postgres"] }
 tokio-postgres = { workspace = true, features = ["with-serde_json-1", "with-chrono-0_4"] }
-message = { path = "../message" }
-content = { path = "../content" }
-brick = { path = "../brick" }
-url = { workspace = true }
-indoc = { workspace = true }
-async-fs = { workspace = true }
-serde_yaml = { workspace = true }
-maplit = { workspace = true }
-urlencoding = { workspace = true }
-indexmap = { workspace = true }
+message.path = "../message"
+content.path = "../content"
+brick.path = "../brick"
+url.workspace = true
+indoc.workspace = true
+async-fs.workspace = true
+serde_yaml.workspace = true
+maplit.workspace = true
+urlencoding.workspace = true
+indexmap.workspace = true
 
 [[bin]]
 name = "chat"

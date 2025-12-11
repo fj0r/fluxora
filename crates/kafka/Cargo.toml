@@ -5,11 +5,11 @@ edition = "2024"
 
 [dependencies]
 rdkafka = { version = "0.38", features = ["cmake-build"] }
-serde = { workspace = true }
-serde_derive = { workspace = true }
-serde_json = { workspace = true }
-time = { workspace = true }
-tokio = { workspace = true }
-tracing = { workspace = true }
-message = { path = "../message" }
-chrono = { workspace = true }
+serde.workspace = true
+serde_derive.workspace = true
+serde_json.workspace = true
+time.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+message.path = "../message"
+chrono.workspace = true
