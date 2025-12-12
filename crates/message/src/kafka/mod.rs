@@ -1,10 +1,10 @@
-pub mod config;
+pub use crate::config;
 use crate::time::Created;
 use crate::{
     Event,
     queue::{MessageQueueIncome, MessageQueueOutgo},
 };
-use config::{Queue, QueueIncome, QueueIncomeConfig, QueueOutgo, QueueOutgoConfig};
+use config::{QueueIncomeConfig, QueueOutgoConfig};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -199,34 +199,3 @@ impl ConsumerContext for CustomContext {
 }
 
 type LoggingConsumer = StreamConsumer<CustomContext>;
-
-//I Envelope<T>
-//O ChatMessage<T>
-pub async fn split_mq<I, O>(
-    queue: Queue,
-) -> (
-    Option<UnboundedSender<O>>,
-    Option<Arc<Mutex<UnboundedReceiver<I>>>>,
-)
-where
-    I: Event<Created> + Send + Serialize + for<'a> Deserialize<'a> + Clone + Debug + 'static,
-    O: Event<Created> + Send + Serialize + for<'a> Deserialize<'a> + Clone + Debug + 'static,
-{
-    let income_rx = match queue.income {
-        QueueIncome::kafka(income) => {
-            let mut income_mq: KafkaManagerIncome<I> = KafkaManagerIncome::new(income);
-            income_mq.run().await;
-            income_mq.get_rx()
-        }
-    };
-
-    let outgo_tx = match queue.outgo {
-        QueueOutgo::kafka(outgo) => {
-            let mut outgo_mq: KafkaManagerOutgo<O> = KafkaManagerOutgo::new(outgo);
-            outgo_mq.run().await;
-            outgo_mq.get_tx()
-        }
-    };
-
-    (outgo_tx, income_rx)
-}

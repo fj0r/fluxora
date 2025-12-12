@@ -7,6 +7,7 @@ use libs::config::{Config, LogFormat, Logic};
 use libs::error::HttpResult;
 use libs::postgres::connx;
 use libs::shared::Shared;
+use message::queue::MessageQueue;
 use serde_json::Value;
 use tracing::info;
 use tracing_subscriber::{
@@ -17,7 +18,7 @@ use tracing_subscriber::{
 use libs::db::Model;
 use libs::handler::{ChatMessage, Envelope, handler};
 use libs::logic::*;
-use message::{kafka::split_mq, time::Created};
+use message::time::Created;
 use url::Url;
 use urlencoding::encode;
 
@@ -54,7 +55,9 @@ async fn main() -> Result<()> {
     let queue = cfg.queue;
 
     let (outgo_tx, income_rx) = if !queue.disable {
-        split_mq::<ChatMessage<Created>, Envelope<Created>>(queue).await
+        queue
+            .split::<ChatMessage<Created>, Envelope<Created>>()
+            .await
     } else {
         (None, None)
     };

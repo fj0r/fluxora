@@ -12,7 +12,7 @@ use libs::config::{ASSETS_PATH, Config, LiveConfig, LogFormat};
 use libs::shared::{Sender, StateChat};
 use libs::template::Tmpls;
 use libs::websocket::{handle_ws, send_to_ws};
-use message::kafka::split_mq;
+use message::queue::MessageQueue;
 use serde_json::{Map, Value};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
     let queue = config.read().await.queue.clone();
 
     let (outgo_tx, income_rx) = if !queue.disable {
-        split_mq(queue).await
+        queue.split().await
     } else {
         (None, None)
     };

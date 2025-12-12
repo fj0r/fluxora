@@ -4,6 +4,8 @@ use std::fmt::Debug;
 
 pub mod session;
 use session::Session;
+pub mod config;
+pub mod instance;
 pub mod kafka;
 pub mod queue;
 pub mod time;

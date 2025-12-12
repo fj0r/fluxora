@@ -13,6 +13,8 @@ pub struct QueueIncomeConfig {
 pub enum QueueIncome {
     #[allow(non_camel_case_types)]
     kafka(QueueIncomeConfig),
+    #[allow(non_camel_case_types)]
+    iggy(QueueIncomeConfig),
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -27,6 +29,8 @@ pub struct QueueOutgoConfig {
 pub enum QueueOutgo {
     #[allow(non_camel_case_types)]
     kafka(QueueOutgoConfig),
+    #[allow(non_camel_case_types)]
+    iggy(QueueOutgoConfig),
 }
 
 #[derive(Debug, Deserialize, Clone)]
