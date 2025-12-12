@@ -9,7 +9,7 @@ use axum::{
     routing::{get, post},
 };
 use indexmap::IndexMap;
-use kafka::Created;
+use message::time::Created;
 use message::{
     Envelope,
     session::{Session, SessionCount, SessionInfo},

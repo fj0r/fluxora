@@ -10,3 +10,11 @@ serde_json.workspace = true
 time.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+chrono.workspace = true
+rdkafka = { workspace = true, optional = true }
+iggy = { workspace = true, optional = true }
+
+[features]
+default = ["kafka", "iggy"]
+kafka = ["dep:rdkafka"]
+iggy = ["dep:iggy"]

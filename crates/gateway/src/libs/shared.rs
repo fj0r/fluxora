@@ -1,6 +1,6 @@
 use super::config::Config;
 use axum::extract::FromRef;
-use kafka::Created;
+use message::time::Created;
 use message::{
     ChatMessage,
     session::{Session, SessionCount},

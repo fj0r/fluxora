@@ -4,10 +4,10 @@ use super::template::Tmpls;
 use anyhow::{Ok as Okk, Result};
 use axum::extract::ws::WebSocket;
 use futures::{sink::SinkExt, stream::StreamExt};
-use kafka::Created;
 use message::{
     Event,
     session::{Session, SessionInfo},
+    time::Created,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::to_value;

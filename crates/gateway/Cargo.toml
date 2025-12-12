@@ -33,11 +33,5 @@ short-uuid.workspace = true
 async-fs.workspace = true
 listenfd = "1.0.2"
 message.path = "../message"
-kafka = { path = "../kafka", optional = true }
 bon.workspace = true
 indexmap.workspace = true
-iggy = { path = "../iggy", optional = true }
-
-[features]
-kafka = ["dep:kafka"]
-iggy = ["dep:iggy"]

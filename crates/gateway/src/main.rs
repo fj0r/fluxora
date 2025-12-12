@@ -7,12 +7,12 @@ use axum::{
     routing::get,
 };
 use axum_extra::extract::cookie::CookieJar;
-use kafka::split_mq;
 use libs::admin::*;
 use libs::config::{ASSETS_PATH, Config, LiveConfig, LogFormat};
 use libs::shared::{Sender, StateChat};
 use libs::template::Tmpls;
 use libs::websocket::{handle_ws, send_to_ws};
+use message::kafka::split_mq;
 use serde_json::{Map, Value};
 use std::sync::Arc;
 use tokio::sync::RwLock;

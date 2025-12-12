@@ -1,11 +1,10 @@
 pub mod config;
-use chrono::{DateTime, LocalResult, TimeZone, Utc};
-use config::{Queue, QueueIncome, QueueIncomeConfig, QueueOutgo, QueueOutgoConfig};
-use message::{
+use crate::time::Created;
+use crate::{
     Event,
     queue::{MessageQueueIncome, MessageQueueOutgo},
 };
-use rdkafka::Timestamp;
+use config::{Queue, QueueIncome, QueueIncomeConfig, QueueOutgo, QueueOutgoConfig};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -26,28 +25,6 @@ use tokio::sync::{
 use tokio::task::spawn;
 use tracing::{error, info, warn};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-pub struct Created(pub DateTime<Utc>);
-
-impl Default for Created {
-    fn default() -> Self {
-        Self(Utc::now())
-    }
-}
-
-impl From<Timestamp> for Created {
-    fn from(value: Timestamp) -> Self {
-        if let Timestamp::CreateTime(ts) = value
-            && let LocalResult::Single(ts) = Utc.timestamp_millis_opt(ts)
-        {
-            return Self(ts);
-        }
-        match Utc.timestamp_millis_opt(0) {
-            LocalResult::Single(ts) => Self(ts),
-            _ => unreachable!(),
-        }
-    }
-}
 #[derive(Clone)]
 pub struct KafkaManagerOutgo<T>
 where

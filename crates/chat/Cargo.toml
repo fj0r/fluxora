@@ -22,7 +22,6 @@ tokio.workspace = true
 tracing.workspace = true
 tracing-serde.workspace = true
 tracing-subscriber.workspace = true
-kafka.path = "../kafka"
 refinery = { workspace = true, features = ["tokio-postgres"] }
 tokio-postgres = { workspace = true, features = ["with-serde_json-1", "with-chrono-0_4"] }
 message.path = "../message"

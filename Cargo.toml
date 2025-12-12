@@ -7,11 +7,10 @@ members = [
   "crates/brick_macro",
   "crates/content",
   "crates/gateway",
-  "crates/kafka",
   "crates/message",
   "crates/ui",
-  "crates/ui_macro"
-, "crates/iggy"]
+  "crates/ui_macro",
+]
 
 [workspace.dependencies]
 dioxus = { version = "0.7.2" }

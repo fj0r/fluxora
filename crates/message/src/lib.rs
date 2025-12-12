@@ -4,7 +4,9 @@ use std::fmt::Debug;
 
 pub mod session;
 use session::Session;
+pub mod kafka;
 pub mod queue;
+pub mod time;
 
 pub trait Event<C> {
     fn event(&self) -> Option<&str>;
