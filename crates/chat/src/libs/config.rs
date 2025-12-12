@@ -4,7 +4,7 @@ use figment::{
     providers::{Env, Format, Toml},
 };
 use indexmap::IndexMap;
-use kafka::config::Queue;
+use message::kafka::config::Queue;
 use serde::{Deserialize, Serialize};
 use serde_with::{OneOrMany, serde_as};
 use std::ops::Deref;
