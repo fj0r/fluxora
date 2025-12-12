@@ -1,4 +1,4 @@
-pub use crate::config;
+use crate::config;
 use crate::time::Created;
 use crate::{
     Event,
