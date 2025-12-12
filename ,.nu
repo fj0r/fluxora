@@ -237,20 +237,15 @@ module iggy {
     export def up [
         --dry-run
     ] {
-        let image = 'ghcr.io/fj0r/0x:iggy'
+        let image = 'apache/iggy:latest'
         mut args = [run -d --name iggy]
-        let ports = {
-            '8080': 8080
-            '8090': 8090
-            '3000': 3000
-        }
-        for i in ($ports | transpose k v) {
-            let pi = $i.k | into int
+        for i in [3000 8080 8090 8092] {
+            let pi = $"1($i)" | into int
             let rp = port $pi
             if $rp != $pi {
-                print $"(ansi grey)Port ($i.k) is already in use, switching to ($rp)(ansi reset)"
+                print $"(ansi grey)Port ($i) is already in use, switching to ($rp)(ansi reset)"
             }
-            $args ++= [-p $"($rp):($i.v)"]
+            $args ++= [-p $"($rp):($i)"]
         }
         let envs = {
         }
@@ -259,6 +254,11 @@ module iggy {
         }
         let data = [$WORKDIR data] | path join
         $args ++= [-v $"($data):/local_data"]
+        $args ++= [
+            --cap-add SYS_NICE
+            --security-opt seccomp=unconfined
+            --ulimit memlock=-1:-1
+        ]
         $args ++= [$image]
 
         if $dry_run {
