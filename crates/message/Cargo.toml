@@ -13,6 +13,7 @@ tracing.workspace = true
 chrono.workspace = true
 rdkafka = { workspace = true, optional = true }
 iggy = { workspace = true, optional = true }
+anyhow.workspace = true
 
 [features]
 default = ["kafka", "iggy"]

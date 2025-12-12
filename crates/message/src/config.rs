@@ -1,10 +1,31 @@
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct QueueIncomeConfig {
+pub struct KafkaIncomeConfig {
     pub broker: Vec<String>,
     pub topic: Vec<String>,
     pub group: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct KafkaOutgoConfig {
+    pub broker: Vec<String>,
+    pub topic: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct IggyIncomeConfig {
+    pub broker: String,
+    pub stream: String,
+    pub topic: String,
+    pub group: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct IggyOutgoConfig {
+    pub broker: String,
+    pub stream: String,
+    pub topic: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -12,15 +33,9 @@ pub struct QueueIncomeConfig {
 #[allow(unused)]
 pub enum QueueIncome {
     #[allow(non_camel_case_types)]
-    kafka(QueueIncomeConfig),
+    kafka(KafkaIncomeConfig),
     #[allow(non_camel_case_types)]
-    iggy(QueueIncomeConfig),
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct QueueOutgoConfig {
-    pub broker: Vec<String>,
-    pub topic: String,
+    iggy(IggyIncomeConfig),
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -28,9 +43,9 @@ pub struct QueueOutgoConfig {
 #[allow(unused)]
 pub enum QueueOutgo {
     #[allow(non_camel_case_types)]
-    kafka(QueueOutgoConfig),
+    kafka(KafkaOutgoConfig),
     #[allow(non_camel_case_types)]
-    iggy(QueueOutgoConfig),
+    iggy(IggyOutgoConfig),
 }
 
 #[derive(Debug, Deserialize, Clone)]

@@ -4,7 +4,8 @@ use crate::{
     Event,
     queue::{MessageQueueIncome, MessageQueueOutgo},
 };
-use config::{QueueIncomeConfig, QueueOutgoConfig};
+use anyhow::Result;
+use config::{KafkaIncomeConfig, KafkaOutgoConfig};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -31,14 +32,14 @@ where
     T: Send + Serialize + for<'de> Deserialize<'de>,
 {
     tx: Option<UnboundedSender<T>>,
-    producer: QueueOutgoConfig,
+    producer: KafkaOutgoConfig,
 }
 
 impl<T> KafkaManagerOutgo<T>
 where
     T: Send + Serialize + for<'de> Deserialize<'de> + 'static,
 {
-    pub fn new(producer: QueueOutgoConfig) -> Self {
+    pub fn new(producer: KafkaOutgoConfig) -> Self {
         Self { tx: None, producer }
     }
 }
@@ -49,23 +50,23 @@ where
 {
     type Item = T;
 
-    async fn run(&mut self) {
-        let (producer_tx, mut producer_rx) = unbounded_channel::<Self::Item>();
-        let producer_cfg = self.producer.clone();
+    async fn run(&mut self) -> Result<()> {
+        let (tx, mut rx) = unbounded_channel::<Self::Item>();
+        let cfg = self.producer.clone();
 
         let producer: FutureProducer = ClientConfig::new()
-            .set("bootstrap.servers", &producer_cfg.broker[0])
+            .set("bootstrap.servers", &cfg.broker[0])
             .set("message.timeout.ms", "5000")
             .create()
             .expect("Failed to create Kafka producer");
 
         spawn(async move {
             // let topic : Vec<&str> = producer_cfg.topic.iter().map(<_>::as_ref).collect();
-            while let Some(value) = producer_rx.recv().await {
+            while let Some(value) = rx.recv().await {
                 let value = serde_json::to_string(&value).expect("serde to string");
                 let _delivery_status = producer
                     .send(
-                        FutureRecord::to(&producer_cfg.topic)
+                        FutureRecord::to(&cfg.topic)
                             .payload(&value)
                             .key("")
                             .headers(OwnedHeaders::new().insert(Header {
@@ -78,7 +79,8 @@ where
             }
         });
 
-        self.tx = Some(producer_tx);
+        self.tx = Some(tx);
+        Ok(())
     }
 
     fn get_tx(&self) -> Option<UnboundedSender<Self::Item>> {
@@ -92,14 +94,14 @@ where
     T: Send + Serialize + for<'de> Deserialize<'de>,
 {
     rx: Option<Arc<Mutex<UnboundedReceiver<T>>>>,
-    consumer: QueueIncomeConfig,
+    consumer: KafkaIncomeConfig,
 }
 
 impl<T> KafkaManagerIncome<T>
 where
     T: Send + Serialize + for<'de> Deserialize<'de> + 'static,
 {
-    pub fn new(consumer: QueueIncomeConfig) -> Self {
+    pub fn new(consumer: KafkaIncomeConfig) -> Self {
         Self { rx: None, consumer }
     }
 }
@@ -110,15 +112,15 @@ where
 {
     type Item = T;
 
-    async fn run(&mut self) {
-        let (consumer_tx, consumer_rx) = unbounded_channel::<Self::Item>();
-        let consumer_cfg = self.consumer.clone();
+    async fn run(&mut self) -> Result<()> {
+        let (tx, rx) = unbounded_channel::<Self::Item>();
+        let cfg = self.consumer.clone();
 
         let context = CustomContext;
 
         let consumer: LoggingConsumer = ClientConfig::new()
-            .set("group.id", consumer_cfg.group.unwrap_or("default".into()))
-            .set("bootstrap.servers", consumer_cfg.broker[0].clone())
+            .set("group.id", cfg.group.unwrap_or("default".into()))
+            .set("bootstrap.servers", cfg.broker[0].clone())
             .set("enable.partition.eof", "false")
             .set("session.timeout.ms", "6000")
             .set("enable.auto.commit", "true")
@@ -129,7 +131,7 @@ where
             .expect("Failed to create Kafka consumer");
 
         spawn(async move {
-            let topic: Vec<&str> = consumer_cfg.topic.iter().map(<_>::as_ref).collect();
+            let topic: Vec<&str> = cfg.topic.iter().map(<_>::as_ref).collect();
 
             consumer
                 .subscribe(topic.as_slice())
@@ -150,7 +152,7 @@ where
                         match serde_json::from_str::<Self::Item>(payload) {
                             Ok(mut value) => {
                                 value.set_time(m.timestamp().into());
-                                if let Err(e) = consumer_tx.send(value) {
+                                if let Err(e) = tx.send(value) {
                                     error!("Failed to send message from consumer: {}", e);
                                 }
                             }
@@ -172,7 +174,8 @@ where
                 }
             }
         });
-        self.rx = Some(Arc::new(Mutex::new(consumer_rx)));
+        self.rx = Some(Arc::new(Mutex::new(rx)));
+        Ok(())
     }
 
     fn get_rx(&self) -> Option<Arc<Mutex<UnboundedReceiver<Self::Item>>>> {
