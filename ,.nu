@@ -255,7 +255,7 @@ module iggy {
         for i in ($envs | transpose k v) {
             $args ++= [-e $"($i.k)=($i.v)"]
         }
-        let data = [$WORKDIR data] | path join
+        let data = [$WORKDIR data iggy] | path join
         $args ++= [-v $"($data):/local_data"]
         $args ++= [
             --cap-add SYS_NICE

@@ -23,7 +23,7 @@ use tokio::sync::{
 use tokio::task::spawn;
 use tracing::{error, info, warn};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IggyManagerOutgo<T>
 where
     T: Send + Serialize + for<'de> Deserialize<'de>,
@@ -63,7 +63,13 @@ where
             .partitioning(Partitioning::balanced())
             .build();
 
-        producer.init().await?;
+        match producer.init().await {
+            Ok(_) => {}
+            Err(e) => {
+                println!("IggyOutgoError: {:#?}", e);
+                panic!()
+            }
+        };
 
         spawn(async move {
             // let topic : Vec<&str> = producer_cfg.topic.iter().map(<_>::as_ref).collect();
@@ -82,7 +88,7 @@ where
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IggyManagerIncome<T>
 where
     T: Send + Serialize + for<'de> Deserialize<'de>,
@@ -126,7 +132,13 @@ where
             .poll_interval(IggyDuration::from_str("1ms")?)
             .batch_length(1000)
             .build();
-        consumer.init().await?;
+        match consumer.init().await {
+            Ok(_) => {}
+            Err(e) => {
+                println!("IggyIncomeError: {:#?}", e);
+                panic!()
+            }
+        };
 
         spawn(async move {
             while let Some(Ok(m)) = consumer.next().await {
