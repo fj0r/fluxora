@@ -14,6 +14,7 @@ chrono.workspace = true
 rdkafka = { workspace = true, optional = true }
 iggy = { workspace = true, optional = true }
 anyhow.workspace = true
+futures-util.workspace = true
 
 [features]
 default = ["kafka", "iggy"]

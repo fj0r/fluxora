@@ -24,6 +24,7 @@ axum = "0.8.7"
 axum-extra = { version = "0.12" }
 figment = { version = "0.10.19", features = ["toml", "env"] }
 futures = "0.3.31"
+futures-util = "0.3.31"
 sqlx = { version = "0.8.6" }
 tokio-postgres = { version = "0.7.15" }
 refinery = { version = "0.9.0" }

@@ -4,13 +4,14 @@ use crate::{
     Event,
     queue::{MessageQueueIncome, MessageQueueOutgo},
 };
-use anyhow::Result;
+use anyhow::{Ok as Okk, Result, anyhow};
 use config::{IggyIncomeConfig, IggyOutgoConfig};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use futures_util::StreamExt;
 use iggy::prelude::{
     AutoCommit::IntervalOrWhen, AutoCommitWhen::ConsumingAllMessages, DirectConfig, IggyClient,
     IggyDuration, IggyMessage, Partitioning, PollingStrategy,
@@ -68,7 +69,7 @@ where
             // let topic : Vec<&str> = producer_cfg.topic.iter().map(<_>::as_ref).collect();
             while let Some(value) = producer_rx.recv().await {
                 let value = serde_json::to_string(&value).expect("serde to string");
-                producer.send(vec![IggyMessage::from(value)]).await;
+                let _ = producer.send(vec![IggyMessage::from(value)]).await;
             }
         });
 
@@ -128,20 +129,15 @@ where
         consumer.init().await?;
 
         spawn(async move {
-            /* FIXME:
-            while let Some(m) = consumer.next().await {
-                let payload = match m.payload_view::<str>() {
-                    None => "",
-                    Some(Ok(s)) => s,
-                    Some(Err(e)) => {
-                        warn!("Error while deserializing message payload: {:?}", e);
-                        ""
-                    }
+            while let Some(Ok(m)) = consumer.next().await {
+                let payload = if let Ok(m) = std::str::from_utf8(&m.message.payload) {
+                    Ok(m)
+                } else {
+                    Err(anyhow!("Error while handling message"))
                 };
-
-                match serde_json::from_str::<Self::Item>(payload) {
+                match serde_json::from_str::<Self::Item>(payload?) {
                     Ok(mut value) => {
-                        value.set_time(m.timestamp().into());
+                        value.set_time(m.message.header.timestamp.into());
                         if let Err(e) = tx.send(value) {
                             error!("Failed to send message from consumer: {}", e);
                         }
@@ -150,17 +146,8 @@ where
                         error!("Failed to deserialize: {:?}", e);
                     }
                 }
-                /*
-                info!("key: '{:?}', payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                      m.key(), payload, m.topic(), m.partition(), m.offset(), m.timestamp());
-                if let Some(headers) = m.headers() {
-                    for header in headers.iter() {
-                        info!("  Header {:#?}: {:?}", header.key, header.value);
-                    }
-                }
-                */
             }
-            */
+            Okk(())
         });
         self.rx = Some(Arc::new(Mutex::new(rx)));
         Ok(())
