@@ -19,6 +19,8 @@ pub struct KafkaOutgoConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct IggyIncomeConfig {
     pub broker: String,
+    pub username: String,
+    pub password: String,
     pub stream: String,
     pub topic: String,
     pub group: Option<String>,
@@ -28,9 +30,25 @@ pub struct IggyIncomeConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct IggyOutgoConfig {
     pub broker: String,
+    pub username: String,
+    pub password: String,
     pub stream: String,
     pub topic: String,
 }
+
+macro_rules! iggy_conn {
+    ($($id: ident),* $(,)?) => {
+        $(
+            impl $id {
+                pub fn to_conn(&self) -> String {
+                    format!("iggy://{}:{}@{}", self.username, self.password, self.broker)
+                }
+            }
+        )*
+    };
+}
+
+iggy_conn![IggyIncomeConfig, IggyOutgoConfig];
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]

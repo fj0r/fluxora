@@ -50,7 +50,7 @@ where
     async fn run(&mut self) -> Result<()> {
         let (tx, mut producer_rx) = unbounded_channel::<Self::Item>();
         let cfg = &self.producer;
-        let client = IggyClient::from_connection_string(&cfg.broker)?;
+        let client = IggyClient::from_connection_string(&cfg.to_conn())?;
 
         let producer = client
             .producer(&cfg.stream, &cfg.topic)?
@@ -109,7 +109,7 @@ where
     async fn run(&mut self) -> Result<()> {
         let (tx, rx) = unbounded_channel::<Self::Item>();
         let cfg = &self.consumer;
-        let client = IggyClient::from_connection_string(&cfg.broker)?;
+        let client = IggyClient::from_connection_string(&cfg.to_conn())?;
         let mut consumer = client
             .consumer_group(
                 cfg.group.as_ref().map_or("default", |v| v),

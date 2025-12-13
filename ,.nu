@@ -238,7 +238,8 @@ module iggy {
         --dry-run
     ] {
         let image = 'apache/iggy:latest'
-        mut args = [run -d --name iggy]
+        let name = 'iggy'
+        mut args = [run -d --name $name]
         for i in [3000 8080 8090 8092] {
             let pi = $"1($i)" | into int
             let rp = port $pi
@@ -248,6 +249,8 @@ module iggy {
             $args ++= [-p $"($rp):($i)"]
         }
         let envs = {
+            IGGY_ROOT_USERNAME: 'iggy'
+            IGGY_ROOT_PASSWORD: 'iggy'
         }
         for i in ($envs | transpose k v) {
             $args ++= [-e $"($i.k)=($i.v)"]
@@ -265,7 +268,12 @@ module iggy {
             print $"($env.CNTRCTL) ($args | str join ' ')"
         } else {
             ^$env.CNTRCTL ...$args
+            let args = [exec -it $name iggy --username iggy --password iggy]
+            ^$env.CNTRCTL ...[...$args stream create fluxora]
+            ^$env.CNTRCTL ...[...$args topic create fluxora event 1 none]
+            ^$env.CNTRCTL ...[...$args topic create fluxora push 1 none]
         }
+
     }
 }
 
