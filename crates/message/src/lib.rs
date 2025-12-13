@@ -5,8 +5,10 @@ use std::fmt::Debug;
 pub mod session;
 use session::Session;
 pub mod config;
+#[cfg(feature = "iggy")]
 mod iggy;
 pub mod instance;
+#[cfg(feature = "kafka")]
 mod kafka;
 pub mod queue;
 pub mod time;

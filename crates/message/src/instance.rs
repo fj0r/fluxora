@@ -1,4 +1,7 @@
 use crate::config::{Queue, QueueIncome, QueueOutgo};
+#[cfg(feature = "iggy")]
+use crate::iggy::{IggyManagerIncome, IggyManagerOutgo};
+#[cfg(feature = "kafka")]
 use crate::kafka::{KafkaManagerIncome, KafkaManagerOutgo};
 use crate::queue::{MessageQueue, MessageQueueIncome, MessageQueueOutgo};
 use crate::{Event, time::Created};
@@ -24,24 +27,32 @@ impl MessageQueue for Queue {
         O: Event<Created> + Send + Serialize + for<'a> Deserialize<'a> + Clone + Debug + 'static,
     {
         let income_rx = match self.income {
+            #[cfg(feature = "kafka")]
             QueueIncome::kafka(income) => {
                 let mut income_mq: KafkaManagerIncome<I> = KafkaManagerIncome::new(income);
-                income_mq.run().await;
+                let _ = income_mq.run().await;
                 income_mq.get_rx()
             }
-            QueueIncome::iggy(_) => {
-                todo!()
+            #[cfg(feature = "iggy")]
+            QueueIncome::iggy(income) => {
+                let mut income_mq: IggyManagerIncome<I> = IggyManagerIncome::new(income);
+                let _ = income_mq.run().await;
+                income_mq.get_rx()
             }
         };
 
         let outgo_tx = match self.outgo {
+            #[cfg(feature = "kafka")]
             QueueOutgo::kafka(outgo) => {
                 let mut outgo_mq: KafkaManagerOutgo<O> = KafkaManagerOutgo::new(outgo);
-                outgo_mq.run().await;
+                let _ = outgo_mq.run().await;
                 outgo_mq.get_tx()
             }
-            QueueOutgo::iggy(_) => {
-                todo!()
+            #[cfg(feature = "iggy")]
+            QueueOutgo::iggy(outgo) => {
+                let mut outgo_mq: IggyManagerOutgo<O> = IggyManagerOutgo::new(outgo);
+                let _ = outgo_mq.run().await;
+                outgo_mq.get_tx()
             }
         };
 
