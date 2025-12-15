@@ -135,7 +135,7 @@ where
         match consumer.init().await {
             Ok(_) => {}
             Err(e) => {
-                println!("IggyIncomeError: {:#?}", e);
+                println!("IggyIncomeError: {}", e);
                 panic!()
             }
         };

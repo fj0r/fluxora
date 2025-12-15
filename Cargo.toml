@@ -28,7 +28,7 @@ futures-util = "0.3.31"
 sqlx = { version = "0.8.6" }
 tokio-postgres = { version = "0.7.15" }
 refinery = { version = "0.9.0" }
-minijinja = { version = "2.13.0", features = ["loader"] }
+minijinja = { version = "2.14.0", features = ["loader"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_derive = "1.0.228"
 serde_json = "1.0.145"
@@ -37,7 +37,7 @@ short-uuid = "0.2.0"
 itertools = "0.14.0"
 time = "0.3.44"
 chrono = { version = "0.4.42", features = ["serde"] }
-reqwest = { version = "0.12.25", features = ["json"] }
+reqwest = { version = "0.12.26", features = ["json"] }
 thiserror = "2.0.17"
 tokio = { version = "1.48.0", features = ["full"] }
 tracing = "0.1.43"

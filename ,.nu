@@ -239,14 +239,20 @@ module iggy {
     ] {
         let image = 'apache/iggy:latest'
         let name = 'iggy'
-        mut args = [run -d --name $name]
-        for i in [3000 8080 8090 8092] {
-            let pi = $"1($i)" | into int
-            let rp = port $pi
-            if $rp != $pi {
-                print $"(ansi grey)Port ($i) is already in use, switching to ($rp)(ansi reset)"
+        mut args = [run -d --name $name --network=host]
+        let addr = {
+            IGGY_HTTP_ADDRESS: 3006 # '0.0.0.0:3000'
+            IGGY_QUIC_ADDRESS: 8086 # '0.0.0.0:8080'
+            IGGY_TCP_ADDRESS:  8096 # '0.0.0.0:8090'
+            IGGY_WEBSOCKET_ADDRESS: 8092 # '0.0.0.0:8092'
+        }
+        for i in ($addr | transpose k v) {
+            let real = port $i.v
+            if $real != $i.v {
+                print $"(ansi grey)Port ($i) is already in use, switching to ($real)(ansi reset)"
             }
-            $args ++= [-p $"($rp):($i)"]
+            $args ++= [-e $"($i.k)=0.0.0.0:($i.v)" ]
+            $args ++= [-p $"($i.v):($real)"]
         }
         let envs = {
             IGGY_ROOT_USERNAME: 'iggy'
@@ -267,11 +273,15 @@ module iggy {
         if $dry_run {
             print $"($env.CNTRCTL) ($args | str join ' ')"
         } else {
+            dcr $name
             ^$env.CNTRCTL ...$args
-            let args = [exec -it $name iggy --username iggy --password iggy]
-            ^$env.CNTRCTL ...[...$args stream create fluxora]
-            ^$env.CNTRCTL ...[...$args topic create fluxora event 1 none]
-            ^$env.CNTRCTL ...[...$args topic create fluxora push 1 none]
+            let base = [exec -it $name iggy --tcp-server-address $"localhost:($addr.IGGY_TCP_ADDRESS)" --username iggy --password iggy]
+            wait-cmd -t $'wait ($name)' {
+                ^$env.CNTRCTL ...[...$base me]
+            }
+            ^$env.CNTRCTL ...[...$base stream create fluxora]
+            ^$env.CNTRCTL ...[...$base topic create fluxora event 1 none]
+            ^$env.CNTRCTL ...[...$base topic create fluxora push 1 none]
         }
 
     }

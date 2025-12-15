@@ -2,33 +2,33 @@ login_with_cookie = true
 [trace]
 format = 'compact'
 
-# [queue.outgo]
-# type = 'kafka'
-# broker = ['localhost:19092']
-# topic = 'event'
-
-# [queue.income]
-# type = 'kafka'
-# broker = ['localhost:19092']
-# topic = ['push']
-# group = 'ws'
-
 [queue.outgo]
-type = 'iggy'
-broker = 'localhost:18090'
-username = 'iggy'
-password = 'iggy'
-stream = 'fluxora'
+type = 'kafka'
+broker = ['localhost:19092']
 topic = 'event'
 
 [queue.income]
-type = 'iggy'
-broker = 'localhost:18090'
-username = 'iggy'
-password = 'iggy'
-stream = 'fluxora'
-topic = 'push'
+type = 'kafka'
+broker = ['localhost:19092']
+topic = ['push']
 group = 'ws'
+
+# [queue.outgo]
+# type = 'iggy'
+# broker = '127.0.0.1:8096'
+# username = 'iggy'
+# password = 'iggy'
+# stream = 'fluxora'
+# topic = 'event'
+
+# [queue.income]
+# type = 'iggy'
+# broker = '127.0.0.1:8096'
+# username = 'iggy'
+# password = 'iggy'
+# stream = 'fluxora'
+# topic = 'push'
+# group = 'ws'
 
 [hooks.login]
 endpoint = 'http://localhost:3000/debug/login'
