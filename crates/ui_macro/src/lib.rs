@@ -3,8 +3,8 @@ use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
 use std::collections::HashMap;
 use syn::{Error, parse_file, parse_macro_input};
-mod configlist;
-use configlist::ConfigList;
+mod attrs;
+use attrs::Attrs;
 mod walk;
 use walk::{CompInfo, walk};
 mod utils;
@@ -20,7 +20,7 @@ macro_rules! bail {
 
 #[proc_macro]
 pub fn gen_dispatch(input: TokenStream) -> TokenStream {
-    let config = parse_macro_input!(input as ConfigList)
+    let config = parse_macro_input!(input as Attrs)
         .0
         .into_iter()
         .collect::<HashMap<_, _>>();

@@ -1,4 +1,4 @@
-use crate::configlist::ConfigList;
+use crate::attrs::Attrs;
 use crate::utils::{get_ident_from_type, struct_has_field};
 use std::collections::HashMap;
 use std::io::Write;
@@ -59,9 +59,9 @@ pub fn walk(ast: &syn::File) -> HashMap<String, CompInfo> {
                                     let tk = x.tokens.clone();
                                     #[cfg(test)]
                                     let _ = write!(lf, "{:#?}\n", tk);
-                                    syn::parse2::<ConfigList>(tk).unwrap_or_default().0
+                                    syn::parse2::<Attrs>(tk).unwrap_or_default().0
                                 } else {
-                                    ConfigList::default().0
+                                    Attrs::default().0
                                 }
                             })
                             .collect::<HashMap<_, _>>();
