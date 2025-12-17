@@ -8,26 +8,25 @@ edition = "2024"
 
 [dependencies]
 anyhow.workspace = true
-tracing-wasm.workspace = true
-dioxus.workspace = true
+brick = { workspace = true } #unified
+chrono.workspace = true
+content = { workspace = true } #unified
 dioxus.features = ["macro", "web"]
+dioxus.workspace = true
 futures.workspace = true
 gloo-net.workspace = true
-js-sys.workspace = true
-markdown.workspace = true
-web-sys.workspace = true
-serde_json.workspace = true
-itertools.workspace = true
-minijinja.workspace = true
-chrono.workspace = true
-serde.workspace = true
-serde.features = ["derive", "serde_derive"]
-brick.path = "../brick"
-brick.features = ["dioxus", "classify", "merge", "render"]
-content.path = "../content"
-ui_macro.path = "../ui_macro"
-maplit.workspace = true
 indoc.workspace = true
+itertools.workspace = true
+js-sys.workspace = true
+maplit.workspace = true
+markdown.workspace = true
+minijinja.workspace = true
+serde.features = ["derive", "serde_derive"]
+serde.workspace = true
+serde_json.workspace = true
+tracing-wasm.workspace = true
+ui_macro.path = "../ui_macro"
+web-sys.workspace = true
 
 [features]
 default = ["web"]
