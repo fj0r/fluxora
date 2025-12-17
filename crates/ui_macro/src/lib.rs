@@ -28,7 +28,6 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
     let Some(file) = config.get("file") else {
         bail!("must provide file");
     };
-    println!("cargo:rerun-if-changed={}", file);
 
     let Some(entry) = config.get("entry") else {
         bail!("must provide entry");
@@ -49,14 +48,14 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
         bail!("parse {} failed", file);
     };
 
-    let Ok(m) = gen_match(&ast, entry, object) else {
+    let Ok(m) = gen_match(&ast, entry, object, &file) else {
         bail!("gen match failed");
     };
 
     m.into()
 }
 
-fn gen_match(ast: &syn::File, entry: &str, object: &str) -> syn::Result<TokenStream2> {
+fn gen_match(ast: &syn::File, entry: &str, object: &str, file: &str) -> syn::Result<TokenStream2> {
     let info = walk(ast);
     let ty = Ident::new(entry, Span::call_site());
     let ob = Ident::new(object, Span::call_site());
@@ -109,6 +108,8 @@ fn gen_match(ast: &syn::File, entry: &str, object: &str) -> syn::Result<TokenStr
     });
 
     Ok(quote! {
+        const _: &[u8] = include_bytes!(#file);
+
         match #ob {
             #(#f),*
         }

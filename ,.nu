@@ -18,7 +18,7 @@ def wait-cmd [action -i: duration = 1sec  -t: string='waiting'] {
     }
 }
 
-module pg {
+export module pg {
     export def cli [query? --db:string = 'chat'] {
         let q = $in
         let q = if ($q | is-empty) { $query } else { $q }
@@ -90,7 +90,7 @@ module pg {
     }
 }
 
-module rpk  {
+export module rpk  {
     export def send [
         data
         --partition:int=0
@@ -233,7 +233,7 @@ module rpk  {
     }
 }
 
-module iggy {
+export module iggy {
     export def up [
         --dry-run
     ] {
@@ -287,7 +287,7 @@ module iggy {
     }
 }
 
-module ui {
+export module ui {
     export def up [] {
         let t = open $CFG | get dx
         cd crates/ui
@@ -356,7 +356,7 @@ module ui {
     }
 }
 
-module hooks {
+export module hooks {
     def cmpl-reg [] {
         open $CFG | get hooks | columns
     }
@@ -376,7 +376,7 @@ module hooks {
     }
 }
 
-module chat {
+export module chat {
     use pg
     export def up [
         --pg
@@ -412,7 +412,7 @@ module chat {
     }
 }
 
-module gw {
+export module gw {
     use rpk
 
     export def up [
@@ -468,7 +468,7 @@ module gw {
 
 }
 
-module test { 
+export module test {
     export def serve [] {
         let ji = job spawn { dev serve }
         sleep 2sec
@@ -503,15 +503,6 @@ module test {
     }
 }
 
-export use test
-export use iggy
-export use rpk
-export use gw
-export use chat
-export use pg
-export use hooks
-export use ui
-
 export def receiver [] {
     let c = open $CFG
     http get $"http://($c.server.host)/admin/sessions"
@@ -542,6 +533,7 @@ def cmpl-external [] {
     | { completions: $in, options: { sort: false } }
 }
 
+use rpk
 export def send [
     file:string@cmpl-data
     --receiver(-r): list<string>@receiver = []
