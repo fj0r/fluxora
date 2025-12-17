@@ -3,7 +3,7 @@ use figment::{
     providers::{Env, Format, Toml},
 };
 use indexmap::IndexMap;
-use message::kafka::config::Queue;
+use message::config::Queue;
 use notify::{Event, RecursiveMode, Result as ResultN, Watcher, recommended_watcher};
 use serde::{Deserialize, Serialize};
 use serde_with::{OneOrMany, serde_as};

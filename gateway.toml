@@ -13,6 +13,23 @@ broker = ['localhost:19092']
 topic = ['push']
 group = 'ws'
 
+# [queue.outgo]
+# type = 'iggy'
+# broker = '127.0.0.1:8096'
+# username = 'iggy'
+# password = 'iggy'
+# stream = 'fluxora'
+# topic = 'event'
+
+# [queue.income]
+# type = 'iggy'
+# broker = '127.0.0.1:8096'
+# username = 'iggy'
+# password = 'iggy'
+# stream = 'fluxora'
+# topic = 'push'
+# group = 'ws'
+
 [hooks.login]
 endpoint = 'http://localhost:3000/debug/login'
 

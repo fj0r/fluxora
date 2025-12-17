@@ -18,7 +18,7 @@ def wait-cmd [action -i: duration = 1sec  -t: string='waiting'] {
     }
 }
 
-module pg {
+export module pg {
     export def cli [query? --db:string = 'chat'] {
         let q = $in
         let q = if ($q | is-empty) { $query } else { $q }
@@ -90,7 +90,7 @@ module pg {
     }
 }
 
-module rpk  {
+export module rpk  {
     export def send [
         data
         --partition:int=0
@@ -233,26 +233,35 @@ module rpk  {
     }
 }
 
-module iggy {
+export module iggy {
     export def up [
         --dry-run
     ] {
         let image = 'apache/iggy:latest'
-        mut args = [run -d --name iggy]
-        for i in [3000 8080 8090 8092] {
-            let pi = $"1($i)" | into int
-            let rp = port $pi
-            if $rp != $pi {
-                print $"(ansi grey)Port ($i) is already in use, switching to ($rp)(ansi reset)"
+        let name = 'iggy'
+        mut args = [run -d --name $name --network=host]
+        let addr = {
+            IGGY_HTTP_ADDRESS: 3006 # '0.0.0.0:3000'
+            IGGY_QUIC_ADDRESS: 8086 # '0.0.0.0:8080'
+            IGGY_TCP_ADDRESS:  8096 # '0.0.0.0:8090'
+            IGGY_WEBSOCKET_ADDRESS: 8092 # '0.0.0.0:8092'
+        }
+        for i in ($addr | transpose k v) {
+            let real = port $i.v
+            if $real != $i.v {
+                print $"(ansi grey)Port ($i) is already in use, switching to ($real)(ansi reset)"
             }
-            $args ++= [-p $"($rp):($i)"]
+            $args ++= [-e $"($i.k)=0.0.0.0:($i.v)" ]
+            $args ++= [-p $"($i.v):($real)"]
         }
         let envs = {
+            IGGY_ROOT_USERNAME: 'iggy'
+            IGGY_ROOT_PASSWORD: 'iggy'
         }
         for i in ($envs | transpose k v) {
             $args ++= [-e $"($i.k)=($i.v)"]
         }
-        let data = [$WORKDIR data] | path join
+        let data = [$WORKDIR data iggy] | path join
         $args ++= [-v $"($data):/local_data"]
         $args ++= [
             --cap-add SYS_NICE
@@ -264,12 +273,21 @@ module iggy {
         if $dry_run {
             print $"($env.CNTRCTL) ($args | str join ' ')"
         } else {
+            dcr $name
             ^$env.CNTRCTL ...$args
+            let base = [exec -it $name iggy --tcp-server-address $"localhost:($addr.IGGY_TCP_ADDRESS)" --username iggy --password iggy]
+            wait-cmd -t $'wait ($name)' {
+                ^$env.CNTRCTL ...[...$base me]
+            }
+            ^$env.CNTRCTL ...[...$base stream create fluxora]
+            ^$env.CNTRCTL ...[...$base topic create fluxora event 1 none]
+            ^$env.CNTRCTL ...[...$base topic create fluxora push 1 none]
         }
+
     }
 }
 
-module ui {
+export module ui {
     export def up [] {
         let t = open $CFG | get dx
         cd crates/ui
@@ -338,7 +356,7 @@ module ui {
     }
 }
 
-module hooks {
+export module hooks {
     def cmpl-reg [] {
         open $CFG | get hooks | columns
     }
@@ -358,7 +376,7 @@ module hooks {
     }
 }
 
-module chat {
+export module chat {
     use pg
     export def up [
         --pg
@@ -394,7 +412,7 @@ module chat {
     }
 }
 
-module gw {
+export module gw {
     use rpk
 
     export def up [
@@ -450,7 +468,7 @@ module gw {
 
 }
 
-module test { 
+export module test {
     export def serve [] {
         let ji = job spawn { dev serve }
         sleep 2sec
@@ -485,15 +503,6 @@ module test {
     }
 }
 
-export use test
-export use iggy
-export use rpk
-export use gw
-export use chat
-export use pg
-export use hooks
-export use ui
-
 export def receiver [] {
     let c = open $CFG
     http get $"http://($c.server.host)/admin/sessions"
@@ -524,6 +533,7 @@ def cmpl-external [] {
     | { completions: $in, options: { sort: false } }
 }
 
+use rpk
 export def send [
     file:string@cmpl-data
     --receiver(-r): list<string>@receiver = []

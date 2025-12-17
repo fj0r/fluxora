@@ -5,35 +5,35 @@ edition = "2024"
 
 [dependencies]
 anyhow.workspace = true
+async-fs.workspace = true
 axum.workspace = true
+brick = { workspace = true, features = ["classify", "dioxus", "merge", "render"] } #unified
+chrono.workspace = true
+content = { workspace = true } #unified
 figment.workspace = true
 futures.workspace = true
+indexmap.workspace = true
+indoc.workspace = true
+maplit.workspace = true
+message = { workspace = true } #unified
 minijinja = { workspace = true, features = ["loader"] }
+refinery = { workspace = true, features = ["tokio-postgres"] }
+reqwest.workspace = true
 serde.workspace = true
 serde_derive.workspace = true
 serde_json.workspace = true
 serde_with.workspace = true
+serde_yaml.workspace = true
 short-uuid.workspace = true
 sqlx = { workspace = true, features = ["chrono", "postgres", "runtime-tokio"] }
-chrono.workspace = true
-reqwest.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+tokio-postgres = { workspace = true, features = ["with-serde_json-1", "with-chrono-0_4"] }
 tracing.workspace = true
 tracing-serde.workspace = true
 tracing-subscriber.workspace = true
-refinery = { workspace = true, features = ["tokio-postgres"] }
-tokio-postgres = { workspace = true, features = ["with-serde_json-1", "with-chrono-0_4"] }
-message.path = "../message"
-content.path = "../content"
-brick.path = "../brick"
 url.workspace = true
-indoc.workspace = true
-async-fs.workspace = true
-serde_yaml.workspace = true
-maplit.workspace = true
 urlencoding.workspace = true
-indexmap.workspace = true
 
 [[bin]]
 name = "chat"

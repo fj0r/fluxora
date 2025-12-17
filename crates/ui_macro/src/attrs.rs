@@ -4,30 +4,30 @@ use syn::{
     punctuated::Punctuated,
 };
 
-pub struct ConfigPair {
+pub struct Pair {
     key: Ident,
     value: LitStr,
 }
 
-impl Parse for ConfigPair {
+impl Parse for Pair {
     fn parse(input: ParseStream) -> Result<Self> {
         let key: Ident = input.parse()?;
         let _eq_token: Token![=] = input.parse()?;
         let value: LitStr = input.parse()?;
-        Ok(ConfigPair { key, value })
+        Ok(Pair { key, value })
     }
 }
 
 #[derive(Default)]
-pub struct ConfigList(pub Vec<(String, String)>);
+pub struct Attrs(pub Vec<(String, String)>);
 
-impl Parse for ConfigList {
+impl Parse for Attrs {
     fn parse(input: ParseStream) -> Result<Self> {
-        let list = Punctuated::<ConfigPair, Token![,]>::parse_terminated(input)?;
+        let list = Punctuated::<Pair, Token![,]>::parse_terminated(input)?;
         let list = list
             .iter()
             .map(|x| (x.key.to_string(), x.value.value()))
             .collect::<Vec<_>>();
-        Ok(ConfigList(list))
+        Ok(Attrs(list))
     }
 }
