@@ -8,9 +8,23 @@ use attrs::Attrs;
 mod walk;
 use walk::{CompInfo, walk};
 mod utils;
+use std::env;
 use std::fs::read_to_string;
+use std::path::{Path, PathBuf};
+
+macro_rules! syerr {
+    ($($x: tt)*) => {
+        syn::Error::new(
+            Span::call_site(),
+            format!($($x)*),
+        )
+    };
+}
 
 macro_rules! bail {
+    (@syn $($x: tt)*) => {
+        return Err(syerr!($($x)*))
+    };
     ($($x: tt)*) => {
         return Error::new(Span::call_site(), format!($($x)*))
             .into_compile_error()
@@ -28,6 +42,7 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
     let Some(file) = config.get("file") else {
         bail!("must provide file");
     };
+    let file = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join(file);
 
     let Some(entry) = config.get("entry") else {
         bail!("must provide entry");
@@ -37,40 +52,34 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
         bail!("must provide object");
     };
 
-    let txt = match read_to_string(file) {
-        Ok(txt) => txt,
-        Err(e) => {
-            bail!("{}", e);
-        }
-    };
-
-    let Ok(ast) = parse_file(&txt) else {
-        bail!("parse {} failed", file);
-    };
-
-    let Ok(m) = gen_match(&ast, entry, object, &file) else {
+    let Ok(m) = gen_match(file, entry, object) else {
         bail!("gen match failed");
     };
 
     m.into()
 }
 
-fn gen_match(ast: &syn::File, entry: &str, object: &str, file: &str) -> syn::Result<TokenStream2> {
-    let info = walk(ast);
+fn gen_match(file: impl AsRef<Path>, entry: &str, object: &str) -> syn::Result<TokenStream2> {
+    let file = file.as_ref().to_str().unwrap();
+    let txt = match read_to_string(&file) {
+        Ok(txt) => txt,
+        Err(e) => {
+            bail!(@syn "{}", e);
+        }
+    };
+    let Ok(ast) = parse_file(&txt) else {
+        bail!(@syn "parse {:#?} failed", &file);
+    };
+    let info = walk(&ast);
     let ty = Ident::new(entry, Span::call_site());
     let ob = Ident::new(object, Span::call_site());
-    let CompInfo::Enum { fields } = info
-        .get(entry)
-        .ok_or(syn::Error::new(Span::call_site(), "no fields"))?
-    else {
-        return Err(syn::Error::new(Span::call_site(), "no enum"));
+    let CompInfo::Enum { fields } = info.get(entry).ok_or(syerr!("no fields"))? else {
+        bail!(@syn "no enum");
     };
     let f = fields.iter().map(|x| {
         let var = Ident::new(&x.name, Span::call_site());
         let var_ = Ident::new(&format!("{}_", &x.name), Span::call_site());
-        let has_child = info
-            .get(&x.r#type)
-            .ok_or(syn::Error::new(Span::call_site(), "get child failed"));
+        let has_child = info.get(&x.r#type).ok_or(syerr!("get child failed"));
         let Ok(CompInfo::Struct { name: _, has_sub }) = has_child else {
             // return Err(syn::Error::new(Span::call_site(), "no child"));
             panic!("no child")
