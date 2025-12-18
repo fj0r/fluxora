@@ -28,7 +28,7 @@ pub fn Dynamic(brick: Brick, children: Element) -> Element {
 
     let c = {
         gen_dispatch! {
-            file = "./crates/brick/src/lib.rs",
+            file = "../brick/src/lib.rs",
             entry = "Brick",
             object = "brick"
         }

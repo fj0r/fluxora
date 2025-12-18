@@ -8,9 +8,17 @@ use attrs::Attrs;
 mod walk;
 use walk::{CompInfo, walk};
 mod utils;
+use std::env;
 use std::fs::read_to_string;
+use std::path::{Path, PathBuf};
 
 macro_rules! bail {
+    (@syn $($x: tt)*) => {
+        return Err(syn::Error::new(
+            Span::call_site(),
+            format!($($x)*),
+        ))
+    };
     ($($x: tt)*) => {
         return Error::new(Span::call_site(), format!($($x)*))
             .into_compile_error()
@@ -28,6 +36,7 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
     let Some(file) = config.get("file") else {
         bail!("must provide file");
     };
+    let file = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join(file);
 
     let Some(entry) = config.get("entry") else {
         bail!("must provide entry");
@@ -37,26 +46,25 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
         bail!("must provide object");
     };
 
-    let txt = match read_to_string(file) {
-        Ok(txt) => txt,
-        Err(e) => {
-            bail!("{}", e);
-        }
-    };
-
-    let Ok(ast) = parse_file(&txt) else {
-        bail!("parse {} failed", file);
-    };
-
-    let Ok(m) = gen_match(&ast, entry, object, &file) else {
+    let Ok(m) = gen_match(file, entry, object) else {
         bail!("gen match failed");
     };
 
     m.into()
 }
 
-fn gen_match(ast: &syn::File, entry: &str, object: &str, file: &str) -> syn::Result<TokenStream2> {
-    let info = walk(ast);
+fn gen_match(file: impl AsRef<Path>, entry: &str, object: &str) -> syn::Result<TokenStream2> {
+    let file = file.as_ref().to_str().unwrap();
+    let txt = match read_to_string(&file) {
+        Ok(txt) => txt,
+        Err(e) => {
+            bail!(@syn "{}", e);
+        }
+    };
+    let Ok(ast) = parse_file(&txt) else {
+        bail!(@syn "parse {:#?} failed", &file);
+    };
+    let info = walk(&ast);
     let ty = Ident::new(entry, Span::call_site());
     let ob = Ident::new(object, Span::call_site());
     let CompInfo::Enum { fields } = info
