@@ -12,12 +12,18 @@ use std::env;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
-macro_rules! bail {
-    (@syn $($x: tt)*) => {
-        return Err(syn::Error::new(
+macro_rules! syerr {
+    ($($x: tt)*) => {
+        syn::Error::new(
             Span::call_site(),
             format!($($x)*),
-        ))
+        )
+    };
+}
+
+macro_rules! bail {
+    (@syn $($x: tt)*) => {
+        return Err(syerr!($($x)*))
     };
     ($($x: tt)*) => {
         return Error::new(Span::call_site(), format!($($x)*))
@@ -67,18 +73,13 @@ fn gen_match(file: impl AsRef<Path>, entry: &str, object: &str) -> syn::Result<T
     let info = walk(&ast);
     let ty = Ident::new(entry, Span::call_site());
     let ob = Ident::new(object, Span::call_site());
-    let CompInfo::Enum { fields } = info
-        .get(entry)
-        .ok_or(syn::Error::new(Span::call_site(), "no fields"))?
-    else {
-        return Err(syn::Error::new(Span::call_site(), "no enum"));
+    let CompInfo::Enum { fields } = info.get(entry).ok_or(syerr!("no fields"))? else {
+        bail!(@syn "no enum");
     };
     let f = fields.iter().map(|x| {
         let var = Ident::new(&x.name, Span::call_site());
         let var_ = Ident::new(&format!("{}_", &x.name), Span::call_site());
-        let has_child = info
-            .get(&x.r#type)
-            .ok_or(syn::Error::new(Span::call_site(), "get child failed"));
+        let has_child = info.get(&x.r#type).ok_or(syerr!("get child failed"));
         let Ok(CompInfo::Struct { name: _, has_sub }) = has_child else {
             // return Err(syn::Error::new(Span::call_site(), "no child"));
             panic!("no child")
