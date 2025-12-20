@@ -30,7 +30,6 @@ thiserror.workspace = true
 time.features = ["formatting", "parsing", "serde"]
 time.workspace = true
 tokio.workspace = true
-tower-http.worksapce = true
 tower-http.workspace = true
 tracing.workspace = true
 tracing-serde.workspace = true
