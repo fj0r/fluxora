@@ -15,7 +15,7 @@ members = [
 [workspace.dependencies]
 anyhow = "1.0.100"
 async-fs = "2.2.0"
-axum = "0.8.7"
+axum = "0.8.8"
 axum-extra = { version = "0.12" }
 bincode = "3.0.0"
 libc = "0.2.178"
@@ -51,7 +51,7 @@ serde_derive = "1.0.228"
 serde_json = "1.0.145"
 serde_with = "3.16.1"
 serde_yaml = "0.9.34"
-short-uuid = "0.2.0"
+short-uuid = "0.2.1"
 sqlx = { version = "0.8.6" }
 syn = { version = "2.0.111", features = ["extra-traits", "full"] }
 thiserror = "2.0.17"
