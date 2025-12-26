@@ -79,10 +79,10 @@ fn gen_match(file: impl AsRef<Path>, entry: &str, object: &str) -> syn::Result<T
     let f = fields.iter().map(|x| {
         let var = Ident::new(&x.name, Span::call_site());
         let var_ = Ident::new(&format!("{}_", &x.name), Span::call_site());
-        let has_child = info.get(&x.r#type).expect("get child failed");
+        let info = info.get(&x.r#type).expect("get child failed");
         let CompInfo::Struct {
             name: _, has_sub, ..
-        } = has_child
+        } = info
         else {
             panic!("not a CompInfo::Struct")
         };
