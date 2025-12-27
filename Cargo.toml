@@ -40,7 +40,7 @@ maplit = "1.0.2"
 markdown = "1.0.0"
 message = { path = "crates/message", version = "^0.1.0" } #unified
 minijinja = { version = "2.14.0", features = ["loader"] }
-proc-macro2 = { version = "1.0.103", features = ["span-locations"] }
+proc-macro2 = { version = "1.0.104", features = ["span-locations"] }
 quote = "1.0.42"
 rdkafka = { version = "0.38", features = ["cmake-build"] }
 refinery = { version = "0.9.0" }
@@ -48,7 +48,7 @@ regex = { version = "1" }
 reqwest = { version = "0.12.28", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_derive = "1.0.228"
-serde_json = "1.0.146"
+serde_json = "1.0.148"
 serde_with = "3.16.1"
 serde_yaml = "0.9.34"
 short-uuid = "0.2.1"
