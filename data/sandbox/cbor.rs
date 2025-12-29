@@ -8,8 +8,7 @@
 //! serde = { version = "1.0", features = ["derive"] }
 //! ```
 
-use heapless::Vec;
-use postcard::{from_bytes, to_vec};
+use postcard::{from_bytes, to_allocvec};
 use serde::{Deserialize, Serialize};
 use serde_cbor::{from_slice, to_vec};
 use serde_json::{from_str, to_string, Map, Value};
@@ -29,6 +28,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let json_bytes = json_str.as_bytes();
     println!("JSON str size: {} bytes", json_str.len());
 
+    let b: Vec<u8> = to_allocvec(&origin)?;
+    println!("{:#?}", &b);
     // let bincode_bytes = bincode::encode_to_vec(&origin, bincode::config::standard())?;
     // println!("BINCODE bytes: {:?}", bincode_bytes);
     // println!("BINCODE size: {} bytes", bincode_bytes.len());
