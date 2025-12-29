@@ -17,11 +17,6 @@ anyhow = "1.0.100"
 async-fs = "2.2.0"
 axum = "0.8.8"
 axum-extra = { version = "0.12" }
-bincode = "3.0.0"
-libc = "0.2.178"
-listenfd = "1.0.2"
-notify = "8.2.0"
-rand = "0.9.2"
 bon = "3.8.1"
 brick = { path = "crates/brick", version = "^0.1.0", features = ["classify", "dioxus", "merge", "render"] } #unified
 chrono = { version = "0.4.42", features = ["serde"] }
@@ -36,12 +31,17 @@ indexmap = { version = "2.12.1", features = ["serde"] }
 indoc = "2.0.7"
 itertools = "0.14.0"
 js-sys = "0.3.83"
+libc = "0.2.178"
+listenfd = "1.0.2"
 maplit = "1.0.2"
 markdown = "1.0.0"
 message = { path = "crates/message", version = "^0.1.0" } #unified
 minijinja = { version = "2.14.0", features = ["loader"] }
+notify = "8.2.0"
+postcard = { version = "1.1.3", features = ["use-std"] }
 proc-macro2 = { version = "1.0.104", features = ["span-locations"] }
 quote = "1.0.42"
+rand = "0.9.2"
 rdkafka = { version = "0.38", features = ["cmake-build"] }
 refinery = { version = "0.9.0" }
 regex = { version = "1" }
@@ -69,7 +69,7 @@ urlencoding = "2.1.3"
 web-sys = "0.3.83"
 
 [workspace.package]
-rust-version = "1.88"
+rust-version = "1.88.0"
 
 [profile.dev]
 opt-level = 0
