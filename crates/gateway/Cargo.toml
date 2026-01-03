@@ -34,3 +34,4 @@ tower-http.workspace = true
 tracing.workspace = true
 tracing-serde.workspace = true
 tracing-subscriber.workspace = true
+postcard.workspace = true
