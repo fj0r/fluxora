@@ -22,6 +22,7 @@ pub enum HookVariant {
         endpoint: String,
         #[serde(default = "default_accept")]
         accept: String,
+        render: Option<String>,
     },
 }
 

@@ -27,7 +27,7 @@ impl Hook {
         tmpls: Arc<Tmpls<'_>>,
     ) -> Result<T, HookError>
     where
-        T: for<'de> Deserialize<'de> + Debug,
+        T: for<'de> Deserialize<'de> + Debug + Serialize,
     {
         if self.disable {
             return Err(HookError::Disabled);
@@ -42,11 +42,17 @@ impl Hook {
             }
             HookVariant::Webhook {
                 endpoint,
+                render,
                 accept: _,
             } => {
                 let client = reqwest::Client::new();
                 let r = client.post(endpoint).json(msg).send().await?;
-                let r = r.json::<T>().await?;
+                let mut r = r.json::<T>().await?;
+                if let Some(path) = render {
+                    // TODO: In the context of global state, non-file templates can be updated via the API.
+                    let tmpl = tmpls.get_template(path).unwrap();
+                    r = from_str::<T>(&tmpl.render(&r)?)?;
+                };
                 Ok(r)
             }
         }

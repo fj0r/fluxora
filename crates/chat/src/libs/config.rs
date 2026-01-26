@@ -33,6 +33,8 @@ impl Database {
             password = passwd;
         }
     }
+
+    #[allow(unused)]
     pub fn to_url(self: &Database) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
@@ -79,6 +81,7 @@ pub enum HookVariant {
         endpoint: String,
         #[serde(default = "default_accept")]
         accept: String,
+        render: Option<String>,
     },
 }
 

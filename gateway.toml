@@ -54,7 +54,7 @@ endpoint = 'http://localhost:8000/v1/history'
 
 [hooks.echo]
 endpoint = 'http://localhost:3000/debug/echo'
+render = ''
 
 [hooks.render]
 endpoint = 'http://localhost:3000/debug/render/layout.json'
-
