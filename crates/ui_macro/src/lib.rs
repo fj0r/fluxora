@@ -61,14 +61,14 @@ pub fn gen_dispatch(input: TokenStream) -> TokenStream {
 
 fn gen_match(file: impl AsRef<Path>, entry: &str, object: &str) -> syn::Result<TokenStream2> {
     let file = file.as_ref().to_str().unwrap();
-    let txt = match read_to_string(&file) {
+    let txt = match read_to_string(file) {
         Ok(txt) => txt,
         Err(e) => {
             syerr!(-> "{}", e);
         }
     };
     let Ok(ast) = parse_file(&txt) else {
-        syerr!(-> "parse {:#?} failed", &file);
+        syerr!(-> "parse {:#?} failed", file);
     };
     let info = walk(&ast);
     let ty = Ident::new(entry, Span::call_site());
