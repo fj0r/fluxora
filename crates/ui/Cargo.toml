@@ -27,6 +27,7 @@ serde_json.workspace = true
 tracing-wasm.workspace = true
 ui_macro.path = "../ui_macro"
 web-sys.workspace = true
+mermaid-rs-renderer.workspace = true
 
 [features]
 default = ["web"]
@@ -43,4 +44,3 @@ inherits = "dev"
 
 [profile.android-dev]
 inherits = "dev"
-
