@@ -1,5 +1,17 @@
 ### gateway:
-- [ ] CBOR support
+- Config
+  - [ ] kdl
+  - [ ] arc-swap
+- Serialize
+  - [ ] CBOR support
+  - [ ] rkyv
+- Streaming
+  - [ ] iggy
+  - [ ] walrus
+  - [ ] s2
+- [ ] Allow template rendering of webhook request results
+- Optimize
+  - [ ] RwLock -> dashmap
 - [x] MessageQueue separate into event and push.
   - The event queue is used for business logic.
   - The push queue is used to send messages to users
@@ -27,6 +39,7 @@
         - [x] ~update session_id after the message queue login event~
 
 ### ui:
+- [ ] KDL format
 - [x] Dynamic layout
     - [x] Rack/Case: table/grid
 - [x] Data binding (for some components)

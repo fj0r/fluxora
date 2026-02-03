@@ -67,6 +67,7 @@ impl HookVariant {
         if let HookVariant::Webhook {
             endpoint,
             accept: _,
+            render: _,
         } = self
         {
             let client = reqwest::Client::new();
