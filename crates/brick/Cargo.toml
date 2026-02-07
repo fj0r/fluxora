@@ -9,7 +9,7 @@ itertools.workspace = true
 minijinja = { workspace = true, features = ["loader"] }
 serde.workspace = true
 serde_json.workspace = true
-schemars = { version = "1.2.0", optional = true, features = ["chrono04"] }
+schemars = { version = "1.2.1", optional = true, features = ["chrono04"] }
 regex = { workspace = true, optional = true }
 maplit = { workspace = true, optional = true }
 brick_macro = { path = "../brick_macro", optional = true }
