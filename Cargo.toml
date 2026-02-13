@@ -34,6 +34,8 @@ js-sys = "0.3.85"
 libc = "0.2.181"
 listenfd = "1.0.2"
 maplit = "1.0.2"
+dashmap = "6.1.0"
+arc-swap = "1.8.1"
 markdown = "1.0.0"
 message = { path = "crates/message", version = "^0.1.0" } #unified
 minijinja = { version = "2.15.1", features = ["loader"] }
@@ -76,4 +78,3 @@ opt-level = 0
 
 [profile.dev.package."*"]
 opt-level = 3
-

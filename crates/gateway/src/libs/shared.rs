@@ -1,5 +1,7 @@
 use super::config::Config;
+use arc_swap::ArcSwap;
 use axum::extract::FromRef;
+use dashmap::DashMap;
 use message::time::Created;
 use message::{
     ChatMessage,
@@ -69,7 +71,7 @@ pub type Arw<T> = Arc<RwLock<T>>;
 pub struct Shared<T> {
     pub session: Arw<SessionManager<T>>,
     pub count: Arw<SessionCount>,
-    pub config: Arw<Config>,
+    pub config: Arc<ArcSwap<Config>>,
 }
 
 impl<T: Clone> FromRef<Shared<T>> for Arw<SessionManager<T>> {
@@ -84,14 +86,14 @@ impl<T> FromRef<Shared<T>> for Arw<SessionCount> {
     }
 }
 
-impl<T> FromRef<Shared<T>> for Arw<Config> {
+impl<T> FromRef<Shared<T>> for Arc<ArcSwap<Config>> {
     fn from_ref(input: &Shared<T>) -> Self {
         input.config.clone()
     }
 }
 
 impl<T> Shared<T> {
-    pub fn new(config: Arw<Config>) -> Self {
+    pub fn new(config: Arc<ArcSwap<Config>>) -> Self {
         Shared {
             session: Arc::new(RwLock::new(SessionManager::new())),
             count: Arc::new(RwLock::new(SessionCount::default())),

@@ -1,7 +1,7 @@
 ### gateway:
 - Config
   - [ ] kdl
-  - [ ] arc-swap
+  - [x] arc-swap
 - Serialize
   - [ ] CBOR support
   - [ ] rkyv

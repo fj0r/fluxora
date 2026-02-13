@@ -2,6 +2,7 @@ use super::config::{Config, Hook};
 use super::shared::{Client, StateChat};
 use super::template::Tmpls;
 use anyhow::{Ok as Okk, Result};
+use arc_swap::ArcSwap;
 use axum::extract::ws::WebSocket;
 use futures::{sink::SinkExt, stream::StreamExt};
 use message::{
@@ -47,7 +48,7 @@ pub async fn handle_ws<T>(
     socket: WebSocket,
     outgo_tx: UnboundedSender<T>,
     state: StateChat<UnboundedSender<T>>,
-    config: Arc<RwLock<Config>>,
+    config: Arc<ArcSwap<Config>>,
     tmpls: Arc<Tmpls<'static>>,
     session: &SessionInfo,
 ) where
@@ -60,7 +61,7 @@ pub async fn handle_ws<T>(
         + Send
         + 'static,
 {
-    let config_reader = config.read().await;
+    let config_reader = config.load();
     let (mut sender, mut receiver) = socket.split();
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<T>();

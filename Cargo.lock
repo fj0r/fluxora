@@ -153,6 +153,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f0e0fee31ef5ed1ba1316088939cea399010ed7731dba877ed44aeb407a75ea"
 
 [[package]]
+name = "arc-swap"
+version = "1.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ded5f9a03ac8f24d1b8a25101ee812cd32cdc8c50a4c50237de2c4915850e73"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -795,6 +804,7 @@ name = "chat"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "arc-swap",
  "async-fs",
  "axum",
  "brick",
@@ -2782,10 +2792,12 @@ name = "gateway"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "arc-swap",
  "async-fs",
  "axum",
  "axum-extra",
  "bon",
+ "dashmap",
  "figment",
  "futures",
  "indexmap 2.13.0",

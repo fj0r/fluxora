@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use super::config::{ASSETS_PATH, Config, Hooks};
 use super::error::HttpResult;
 use super::shared::{Arw, Arwsc, Sender, StateChat};
+use arc_swap::ArcSwap;
 use axum::{
     Router,
     extract::{Json, Path, Request, State},
@@ -156,19 +159,22 @@ pub fn debug_router() -> Router<StateChat<Sender>> {
 }
 
 async fn list_hook(
-    State(config): State<Arw<Config>>,
+    State(config): State<Arc<ArcSwap<Config>>>,
 ) -> HttpResult<(StatusCode, Json<IndexMap<String, Hooks>>)> {
-    let s = config.read().await.clone();
-    Ok((StatusCode::OK, Json(s.hooks)))
+    let s = config.load();
+    Ok((StatusCode::OK, Json(s.hooks.clone())))
 }
 
 async fn update_hook(
     Path(hook): Path<String>,
-    State(config): State<Arw<Config>>,
+    State(config): State<Arc<ArcSwap<Config>>>,
     Json(payload): Json<Hooks>,
 ) -> HttpResult<(StatusCode, Json<bool>)> {
-    let mut s = config.write().await;
-    s.hooks.insert(hook, payload);
+    config.rcu(|old| {
+        let mut s = (**old).clone();
+        s.hooks.insert(hook.clone(), payload.clone());
+        Arc::new(s)
+    });
     Ok((StatusCode::OK, Json(true)))
 }
 
