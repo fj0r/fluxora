@@ -1,45 +1,44 @@
-/*** CUSTOM {{{ ***/
-.markdown {
-  & img {
-    max-width: var(--img-max-width);
-  }
+@layer custom {
+    .markdown {
+        & img {
+            max-width: var(--img-max-width);
+        }
+    }
+
+    #main {
+        background-color: oklch(from var(--secondary) calc(l + 0.05) c h);
+    }
+
+    .--body {
+        margin: 0 4px;
+    }
+
+    .--header {
+        color: oklch(from var(--accent) calc(l - 0.2) c h);
+    }
+
+    .--tooltip {
+        background: transparent;
+
+        & * {
+            background: transparent;
+        }
+
+        & > * > * {
+            background-color: oklch(from var(--primary) l c h / 0.6);
+            backdrop-filter: blur(3px);
+        }
+    }
+
+    .--leftside {
+        background-color: oklch(from var(--secondary) calc(l + 0.05) c h);
+
+        & * {
+            background-color: transparent;
+        }
+    }
+
+    .--cart {
+        border-radius: 2rem;
+    }
 }
-
-#main {
-  background-color: oklch(from var(--secondary) calc(l + 0.05) c h);
-}
-
-.--body {
-  margin: 0 4px;
-}
-
-.--header {
-  color: oklch(from var(--accent) calc(l - 0.2) c h);
-}
-
-.--tooltip {
-  background: transparent;
-
-  & * {
-    background: transparent;
-  }
-
-  &>*>* {
-    background-color: oklch(from var(--primary) l c h / 0.6);
-    backdrop-filter: blur(3px);
-  }
-}
-
-.--leftside {
-  background-color: oklch(from var(--secondary) calc(l + 0.05) c h);
-
-  & * {
-    background-color: transparent;
-  }
-}
-
-.--cart {
-  border-radius: 2rem;
-}
-
-/* }}} */

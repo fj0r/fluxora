@@ -1,49 +1,56 @@
-@layer global, base, layout, element, style;
+@import url("custom.css") layer(custom);
 
-@layer global {
+@layer theme, base, layout, element, custom, style;
+
+@layer theme {
     :root {
-        --fg: oklch(0.18 0 0);
-        --bg: oklch(1 0 0);
-        --round: 10px;
-        --input-round: 0.35em;
+        --fg: light-dark(oklch(0.18 0 0), oklch(0.98 0 0));
+        --bg: light-dark(oklch(1 0 0), oklch(0.15 0 0));
+
         --accent: oklch(0.7 0.12 182.49);
         --primary: oklch(0.98 0.06 107.14);
         --secondary: oklch(0.93 0 0);
+
         --disabled: oklch(0.6 0 0);
         --warn: oklch(0.84 0.12 92.82);
         --error: oklch(0.63 0.19 23.03);
+
+        --round: 10px;
+        --input-round: 0.35em;
+
         --border-width: 1px;
         --border-style: solid;
         --border-color: var(--secondary);
         --border: var(--border-width) var(--border-style) var(--border-color);
-        --img-max-width: 500px;
-        overflow-y: auto;
-        overflow-x: hidden;
     }
+}
 
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --fg: oklch(0.98 0 0);
-            --bg: oklch(0.15 0 0);
-        }
-    }
-
+@layer base {
     html {
-        overflow-y: scroll;
+        color-scheme: light dark; /* 激活浏览器的 light-dark 支持 */
         height: 100%;
         font-size: 1.25rem;
-        box-sizing: border-box;
     }
 
+    body {
+        margin: 0;
+        min-height: 100dvh; /* 使用 dynamic vh 处理移动端工具栏高度 */
+        background-color: var(--bg);
+        color: var(--fg);
+        /* 标准化滚动条样式 */
+        scrollbar-color: var(--fg) transparent;
+        scrollbar-width: thin;
+
+        /* 布局容器优化 */
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+    }
+
+    /* 统一所有元素的盒子模型 */
     *,
-    ::after,
-    ::before {
-        box-sizing: inherit;
-        text-decoration-thickness: 0.1rem;
-    }
-
-    :root body {
-        position: absolute;
+    *::before,
+    *::after {
+        box-sizing: border-box;
     }
 
     body {
