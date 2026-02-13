@@ -4,6 +4,7 @@ use super::template::Tmpls;
 use anyhow::{Ok as Okk, Result};
 use arc_swap::ArcSwap;
 use axum::extract::ws::WebSocket;
+use dashmap::Entry;
 use futures::{sink::SinkExt, stream::StreamExt};
 use message::{
     Event,
@@ -13,12 +14,11 @@ use message::{
 use serde::{Deserialize, Serialize};
 use serde_json::to_value;
 use serde_json::{Map, Value};
-use std::collections::hash_map::Entry;
 use std::fmt::Debug;
 use std::sync::Arc;
 use time::OffsetDateTime;
+use tokio::sync::Mutex;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::sync::{Mutex, RwLock};
 
 /* TODO:
 use std::async_iter;
@@ -67,7 +67,7 @@ pub async fn handle_ws<T>(
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<T>();
     let (term_tx, mut term_rx) = tokio::sync::mpsc::channel(1);
 
-    let mut s = state.session.write().await;
+    let mut s = state.session;
     let new_client = Client {
         sender: tx.clone(),
         term: term_tx.clone(),
@@ -189,9 +189,8 @@ pub async fn handle_ws<T>(
 
     tracing::info!("Connection closed for {}", &session.id);
     if !*replaced.lock().await {
-        let mut s = state.session.write().await;
         tracing::info!("Remove session: {}", &session.id);
-        s.remove(&session.id);
+        state.session.remove(&session.id);
     };
 }
 

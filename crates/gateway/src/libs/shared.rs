@@ -1,7 +1,7 @@
 use super::config::Config;
 use arc_swap::ArcSwap;
 use axum::extract::FromRef;
-use dashmap::DashMap;
+use dashmap::{DashMap, Entry, iter::Iter, mapref::multiple::RefMulti};
 use message::time::Created;
 use message::{
     ChatMessage,
@@ -9,24 +9,18 @@ use message::{
 };
 use serde_json::{Map, Value};
 use std::fmt::Debug;
+use std::ops::Deref;
 use std::sync::Arc;
-use std::{
-    collections::{
-        HashMap,
-        hash_map::{Entry, Iter},
-    },
-    ops::Deref,
-};
 use time::OffsetDateTime;
 use tokio::sync::{RwLock, mpsc::UnboundedSender};
 
 #[derive(Clone, Debug)]
 pub struct SessionManager<T> {
-    map: HashMap<Session, T>,
+    map: DashMap<Session, T>,
 }
 
 impl<'a, T> IntoIterator for &'a SessionManager<T> {
-    type Item = (&'a Session, &'a T);
+    type Item = RefMulti<'a, Session, T>;
     type IntoIter = Iter<'a, Session, T>;
     fn into_iter(self) -> Self::IntoIter {
         self.map.iter()
@@ -36,7 +30,7 @@ impl<'a, T> IntoIterator for &'a SessionManager<T> {
 impl<T> SessionManager<T> {
     fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map: DashMap::new(),
         }
     }
 
@@ -48,7 +42,7 @@ impl<T> SessionManager<T> {
         self.map.insert(k, v)
     }
 
-    pub fn remove(&mut self, k: &Session) -> Option<T> {
+    pub fn remove(&mut self, k: &Session) -> Option<(Session, T)> {
         self.map.remove(k)
     }
 
@@ -59,22 +53,18 @@ impl<T> SessionManager<T> {
     pub fn entry(&mut self, k: Session) -> Entry<'_, Session, T> {
         self.map.entry(k)
     }
-
-    pub fn keys(&self) -> Vec<&Session> {
-        self.map.keys().collect()
-    }
 }
 
 pub type Arw<T> = Arc<RwLock<T>>;
 
 #[derive(Debug, Clone)]
 pub struct Shared<T> {
-    pub session: Arw<SessionManager<T>>,
+    pub session: Arc<SessionManager<T>>,
     pub count: Arw<SessionCount>,
     pub config: Arc<ArcSwap<Config>>,
 }
 
-impl<T: Clone> FromRef<Shared<T>> for Arw<SessionManager<T>> {
+impl<T: Clone> FromRef<Shared<T>> for Arc<SessionManager<T>> {
     fn from_ref(input: &Shared<T>) -> Self {
         input.session.clone()
     }
@@ -95,7 +85,7 @@ impl<T> FromRef<Shared<T>> for Arc<ArcSwap<Config>> {
 impl<T> Shared<T> {
     pub fn new(config: Arc<ArcSwap<Config>>) -> Self {
         Shared {
-            session: Arc::new(RwLock::new(SessionManager::new())),
+            session: Arc::new(SessionManager::new()),
             count: Arc::new(RwLock::new(SessionCount::default())),
             config,
         }
