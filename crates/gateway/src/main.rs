@@ -1,5 +1,6 @@
 mod libs;
 use anyhow::{Ok as Okk, Result, bail};
+use arc_swap::ArcSwap;
 use axum::{
     Router,
     extract::{Query, State, ws::WebSocketUpgrade},
@@ -15,7 +16,6 @@ use libs::websocket::{handle_ws, send_to_ws};
 use message::queue::MessageQueue;
 use serde_json::{Map, Value};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{
@@ -42,13 +42,13 @@ async fn main() -> Result<()> {
         }
     };
 
-    let config = Arc::new(RwLock::new(config));
+    let config = Arc::new(ArcSwap::from_pointee(config));
     //dbg!(&config);
     let tmpls: Arc<Tmpls<'static>> = Arc::new(Tmpls::new(ASSETS_PATH).unwrap());
 
     let shared = StateChat::<Sender>::new(config.clone());
 
-    let queue = config.read().await.queue.clone();
+    let queue = config.load().queue.clone();
 
     let (outgo_tx, income_rx) = if !queue.disable {
         queue.split().await
@@ -73,7 +73,7 @@ async fn main() -> Result<()> {
                  Query(mut q): Query<Map<String, Value>>,
                  jar: CookieJar,
                  State(state): State<StateChat<Sender>>| async move {
-                    let s = state.config.read().await;
+                    let s = state.config.load();
                     let login_with_cookie = s.login_with_cookie;
                     let login = &s.hooks.get("login").unwrap()[0];
 

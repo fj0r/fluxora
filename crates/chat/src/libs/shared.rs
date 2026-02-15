@@ -1,7 +1,5 @@
 use super::db::Model;
 use axum::extract::FromRef;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 pub type Db = Model;
 

@@ -2,7 +2,9 @@ use super::config::{Config, Hook};
 use super::shared::{Client, StateChat};
 use super::template::Tmpls;
 use anyhow::{Ok as Okk, Result};
+use arc_swap::ArcSwap;
 use axum::extract::ws::WebSocket;
+use dashmap::Entry;
 use futures::{sink::SinkExt, stream::StreamExt};
 use message::{
     Event,
@@ -10,14 +12,14 @@ use message::{
     time::Created,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
-use serde_json::{Map, Value};
-use std::collections::hash_map::Entry;
+use serde_json::{Map, Value, to_value};
 use std::fmt::Debug;
 use std::sync::Arc;
 use time::OffsetDateTime;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{
+    Mutex,
+    mpsc::{UnboundedReceiver, UnboundedSender},
+};
 
 /* TODO:
 use std::async_iter;
@@ -47,7 +49,7 @@ pub async fn handle_ws<T>(
     socket: WebSocket,
     outgo_tx: UnboundedSender<T>,
     state: StateChat<UnboundedSender<T>>,
-    config: Arc<RwLock<Config>>,
+    config: Arc<ArcSwap<Config>>,
     tmpls: Arc<Tmpls<'static>>,
     session: &SessionInfo,
 ) where
@@ -60,30 +62,30 @@ pub async fn handle_ws<T>(
         + Send
         + 'static,
 {
-    let config_reader = config.read().await;
+    let config_reader = config.load();
     let (mut sender, mut receiver) = socket.split();
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<T>();
     let (term_tx, mut term_rx) = tokio::sync::mpsc::channel(1);
 
-    let mut s = state.session.write().await;
     let new_client = Client {
         sender: tx.clone(),
         term: term_tx.clone(),
         info: session.info.clone(),
         created: OffsetDateTime::now_utc(),
     };
-    match s.entry(session.id.clone()) {
-        Entry::Occupied(mut e) => {
-            let g = e.get_mut();
-            let _ = g.term.send(true).await;
-            *g = new_client;
-        }
-        Entry::Vacant(e) => {
-            e.insert(new_client);
+    {
+        match state.session.entry(session.id.clone()) {
+            Entry::Occupied(mut e) => {
+                let g = e.get_mut();
+                let _ = g.term.send(true).await;
+                *g = new_client;
+            }
+            Entry::Vacant(e) => {
+                e.insert(new_client);
+            }
         }
     }
-    drop(s);
 
     tracing::info!("Connection opened for {}", &session.id);
 
@@ -188,9 +190,8 @@ pub async fn handle_ws<T>(
 
     tracing::info!("Connection closed for {}", &session.id);
     if !*replaced.lock().await {
-        let mut s = state.session.write().await;
         tracing::info!("Remove session: {}", &session.id);
-        s.remove(&session.id);
+        state.session.remove(&session.id);
     };
 }
 
@@ -206,10 +207,9 @@ pub async fn send_to_ws(
 
         while let Some(x) = rx.recv().await {
             if !x.receiver.is_empty() {
-                let s = shared.session.write().await;
                 for r in x.receiver {
-                    if s.contains_key(&r) {
-                        let s = s.get(&r)?;
+                    if shared.session.contains_key(&r) {
+                        let s = shared.session.get(&r)?;
                         let _ = s.send(x.message.clone());
                     }
                 }
