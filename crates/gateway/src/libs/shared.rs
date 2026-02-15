@@ -1,16 +1,18 @@
 use super::config::Config;
 use arc_swap::ArcSwap;
 use axum::extract::FromRef;
-use dashmap::{DashMap, Entry, iter::Iter, mapref::multiple::RefMulti};
-use message::time::Created;
+use dashmap::{
+    DashMap, Entry,
+    iter::Iter,
+    mapref::{multiple::RefMulti, one::Ref},
+};
 use message::{
     ChatMessage,
     session::{Session, SessionCount},
+    time::Created,
 };
 use serde_json::{Map, Value};
-use std::fmt::Debug;
-use std::ops::Deref;
-use std::sync::Arc;
+use std::{fmt::Debug, ops::Deref, sync::Arc};
 use time::OffsetDateTime;
 use tokio::sync::{RwLock, mpsc::UnboundedSender};
 
@@ -34,7 +36,7 @@ impl<T> SessionManager<T> {
         }
     }
 
-    pub fn get(&self, k: &Session) -> Option<&T> {
+    pub fn get(&self, k: &Session) -> Option<Ref<'_, Session, T>> {
         self.map.get(k)
     }
 
@@ -42,7 +44,7 @@ impl<T> SessionManager<T> {
         self.map.insert(k, v)
     }
 
-    pub fn remove(&mut self, k: &Session) -> Option<(Session, T)> {
+    pub fn remove(&self, k: &Session) -> Option<(Session, T)> {
         self.map.remove(k)
     }
 
@@ -50,12 +52,10 @@ impl<T> SessionManager<T> {
         self.map.contains_key(k)
     }
 
-    pub fn entry(&mut self, k: Session) -> Entry<'_, Session, T> {
+    pub fn entry(&self, k: Session) -> Entry<'_, Session, T> {
         self.map.entry(k)
     }
 }
-
-pub type Arw<T> = Arc<RwLock<T>>;
 
 #[derive(Debug, Clone)]
 pub struct Shared<T> {
@@ -112,5 +112,6 @@ impl<T> Deref for Client<T> {
 
 pub type Sender = UnboundedSender<ChatMessage<Created>>;
 
-pub type Arwsc<T> = Arc<RwLock<SessionManager<Client<T>>>>;
+pub type Arw<T> = Arc<RwLock<T>>;
+pub type Asession<T> = Arc<SessionManager<Client<T>>>;
 pub type StateChat<T> = Shared<Client<T>>;

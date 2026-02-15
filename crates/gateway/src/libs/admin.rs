@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-use super::config::{ASSETS_PATH, Config, Hooks};
-use super::error::HttpResult;
-use super::shared::{Arw, Arwsc, Sender, StateChat};
 use arc_swap::ArcSwap;
 use axum::{
     Router,
@@ -12,29 +9,33 @@ use axum::{
     routing::{get, post},
 };
 use indexmap::IndexMap;
-use message::time::Created;
 use message::{
     Envelope,
     session::{Session, SessionCount, SessionInfo},
+    time::Created,
 };
 use minijinja::Environment;
 use serde_json::{Map, Value, from_str};
 
+use super::config::{ASSETS_PATH, Config, Hooks};
+use super::error::HttpResult;
+use super::shared::{Arw, Asession, Sender, StateChat};
+
 async fn send(
-    State(session): State<Arwsc<Sender>>,
+    State(session): State<Asession<Sender>>,
     Json(payload): Json<Envelope<Created>>,
 ) -> HttpResult<(StatusCode, Json<Vec<Session>>)> {
     let mut succ: Vec<Session> = Vec::new();
-    let s = session.read().await;
     if payload.receiver.is_empty() {
-        for (n, c) in &*s {
+        for x in &*session {
+            let (n, c) = x.pair();
             let _ = c.send(payload.message.clone());
             succ.push(n.to_owned());
         }
     } else {
         for r in payload.receiver {
-            if s.contains_key(&r)
-                && let Some(x) = s.get(&r)
+            if session.contains_key(&r)
+                && let Some(x) = session.get(&r)
             {
                 let _ = x.send(payload.message.clone());
                 succ.push(r);
@@ -44,10 +45,10 @@ async fn send(
     Ok((StatusCode::OK, succ.into()))
 }
 
-async fn list(State(session): State<Arwsc<Sender>>) -> axum::Json<Vec<Session>> {
-    let s = session.read().await;
+async fn list(State(session): State<Asession<Sender>>) -> axum::Json<Vec<Session>> {
     let mut r = Vec::new();
-    for (k, _v) in &*s {
+    for x in &*session {
+        let (k, _v) = x.pair();
         r.push(k.clone());
     }
     Json(r)
@@ -55,10 +56,11 @@ async fn list(State(session): State<Arwsc<Sender>>) -> axum::Json<Vec<Session>> 
 
 async fn info(
     Path(user): Path<String>,
-    State(session): State<Arwsc<Sender>>,
+    State(session): State<Asession<Sender>>,
 ) -> axum::Json<Map<String, Value>> {
-    let s = session.read().await;
-    let u = s.get(&user.as_str().into()).map(|x| x.info.clone());
+    let u = session
+        .get(&user.as_str().into())
+        .map(|x| x.value().info.clone());
     Json(u.unwrap_or_else(Map::new))
 }
 

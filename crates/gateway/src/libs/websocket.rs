@@ -12,13 +12,14 @@ use message::{
     time::Created,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, to_value};
 use std::fmt::Debug;
 use std::sync::Arc;
 use time::OffsetDateTime;
-use tokio::sync::Mutex;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::{
+    Mutex,
+    mpsc::{UnboundedReceiver, UnboundedSender},
+};
 
 /* TODO:
 use std::async_iter;
@@ -67,24 +68,24 @@ pub async fn handle_ws<T>(
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<T>();
     let (term_tx, mut term_rx) = tokio::sync::mpsc::channel(1);
 
-    let mut s = state.session;
     let new_client = Client {
         sender: tx.clone(),
         term: term_tx.clone(),
         info: session.info.clone(),
         created: OffsetDateTime::now_utc(),
     };
-    match s.entry(session.id.clone()) {
-        Entry::Occupied(mut e) => {
-            let g = e.get_mut();
-            let _ = g.term.send(true).await;
-            *g = new_client;
-        }
-        Entry::Vacant(e) => {
-            e.insert(new_client);
+    {
+        match state.session.as_ref().entry(session.id.clone()) {
+            Entry::Occupied(mut e) => {
+                let g = e.get_mut();
+                let _ = g.term.send(true).await;
+                *g = new_client;
+            }
+            Entry::Vacant(e) => {
+                e.insert(new_client);
+            }
         }
     }
-    drop(s);
 
     tracing::info!("Connection opened for {}", &session.id);
 
@@ -206,10 +207,9 @@ pub async fn send_to_ws(
 
         while let Some(x) = rx.recv().await {
             if !x.receiver.is_empty() {
-                let s = shared.session.write().await;
                 for r in x.receiver {
-                    if s.contains_key(&r) {
-                        let s = s.get(&r)?;
+                    if shared.session.contains_key(&r) {
+                        let s = shared.session.get(&r)?;
                         let _ = s.send(x.message.clone());
                     }
                 }

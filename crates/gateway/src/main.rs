@@ -16,7 +16,6 @@ use libs::websocket::{handle_ws, send_to_ws};
 use message::queue::MessageQueue;
 use serde_json::{Map, Value};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{
