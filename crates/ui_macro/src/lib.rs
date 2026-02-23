@@ -119,6 +119,7 @@ fn gen_match(file: impl AsRef<Path>, entry: &str, object: &str) -> syn::Result<T
     });
 
     Ok(quote! {
+        // HACK: This unused constant forces the Rust compiler to track changes in "#file".
         const _: &[u8] = include_bytes!(#file);
 
         match #ob {
