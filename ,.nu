@@ -42,7 +42,7 @@ export module pg {
         --dry-run
     ] {
         let cfg = open $CHAT | get database
-        let image = 'postgres:17'
+        let image = 'xy:postgres'
         mut args = [run -d --name chat_db]
         let ports = {
             $cfg.port: 5432
@@ -58,7 +58,7 @@ export module pg {
         for i in ($envs | transpose k v) {
             $args ++= [-e $"($i.k)=($i.v)"]
         }
-        $args ++= [-v $"($WORKDIR)/data/postgres/data:/var/lib/postgresql/data"]
+        $args ++= [-v $"($WORKDIR)/data/postgres:/var/lib/postgresql"]
         $args ++= [$image]
         if $dry_run {
             print $"($env.CNTRCTL) ($args | str join ' ')"

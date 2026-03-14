@@ -1,16 +1,9 @@
 # Events flow. Intelligence appears.
 
-```nu
-use ,.nu
-, serve --rpk
-```
-
-or
-
 gateway
 ```nu
 use ,.nu
-, rpk up
+, rpk up # --external host.docker.internal
 , gw up
 ```
 
