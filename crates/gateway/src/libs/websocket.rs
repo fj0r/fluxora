@@ -1,6 +1,7 @@
 use super::config::{Config, Hook};
 use super::shared::{Client, StateChat};
 use super::template::Tmpls;
+use message::codec::ActiveCodec;
 use anyhow::{Ok as Okk, Result};
 use arc_swap::ArcSwap;
 use axum::extract::ws::WebSocket;
@@ -51,6 +52,7 @@ pub async fn handle_ws<T>(
     state: StateChat<UnboundedSender<T>>,
     config: Arc<ArcSwap<Config>>,
     tmpls: Arc<Tmpls<'static>>,
+    codec: ActiveCodec,
     session: &SessionInfo,
 ) where
     T: Event<Created>
@@ -93,13 +95,14 @@ pub async fn handle_ws<T>(
     context.insert("session_id".into(), session.id.clone().into());
     context.insert("info".into(), Value::Object(session.info.clone()));
 
+    // Greet messages
     if let Some(greet) = config_reader.hooks.get("greet") {
         for g in greet.iter() {
             match g.greet::<T>(&context, tmpls.clone()).await {
                 Ok(payload) => {
-                    if let Ok(text) = serde_json::to_string(&payload) {
+                    if let Ok(bytes) = codec.encode(&payload) {
                         let _ = sender
-                            .send(axum::extract::ws::Message::Text(text.into()))
+                            .send(axum::extract::ws::Message::Binary(bytes.into()))
                             .await;
                     }
                 }
@@ -112,18 +115,19 @@ pub async fn handle_ws<T>(
 
     let replaced = Arc::new(Mutex::new(false));
     let r1 = replaced.clone();
+    let codec_send = codec.clone();
     let mut send_task = tokio::spawn(async move {
         loop {
             tokio::select! {
                 Some(msg) = rx.recv() => {
-                    let text = serde_json::to_string(&msg)?;
-                    // to ws client
-                    if sender
-                        .send(axum::extract::ws::Message::Text(text.into()))
-                        .await
-                        .is_err()
-                    {
-                        break;
+                    if let Ok(bytes) = codec_send.encode(&msg) {
+                        if sender
+                            .send(axum::extract::ws::Message::Binary(bytes.into()))
+                            .await
+                            .is_err()
+                        {
+                            break;
+                        }
                     }
                 },
                 Some(_) = term_rx.recv() => {
@@ -145,9 +149,20 @@ pub async fn handle_ws<T>(
         let mut sid = sid_cloned;
 
         while let Some(Ok(msg)) = receiver.next().await {
-            // text protocol of ws
-            let text = msg.to_text()?;
-            let value = serde_json::from_str(text)?;
+            // Extract bytes from Text or Binary
+            let bytes = match msg {
+                axum::extract::ws::Message::Text(t) => t.as_bytes().to_vec(),
+                axum::extract::ws::Message::Binary(b) => b.to_vec(),
+                _ => continue,
+            };
+            
+            let value = match codec.decode::<serde_json::Value>(&bytes) {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("Codec decode failed: {:?}", e);
+                    continue;
+                }
+            };
             let chat_msg: T = (sid.clone(), value).into();
 
             // TODO: process messages in batches?
@@ -166,8 +181,10 @@ pub async fn handle_ws<T>(
                         Err(e) => {
                             context.insert("event".into(), ev.into());
                             context.insert("error".into(), e.to_string().into());
-                            let t = tmpls.get_template("webhook_error.json")?.render(&context)?;
-                            let _ = tx.send(serde_json::from_str(&t)?);
+                            // Error message rendering (still uses template, so JSON string)
+                            if let Ok(t) = tmpls.get_template("webhook_error.json")?.render(&context) {
+                                let _ = tx.send(serde_json::from_str(&t)?);
+                            }
                         }
                     }
                 }
@@ -200,6 +217,7 @@ use message::{ChatMessage, Envelope};
 pub async fn send_to_ws(
     income_rx: Arc<Mutex<UnboundedReceiver<Envelope<Created>>>>,
     shared: &StateChat<UnboundedSender<ChatMessage<Created>>>,
+    _codec: ActiveCodec, // Passed for future use or consistency, currently just routing
 ) {
     let shared = shared.clone();
     tokio::spawn(async move {

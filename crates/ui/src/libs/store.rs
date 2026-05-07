@@ -8,6 +8,7 @@ use content::{Content, Message, Method, Outflow};
 #[allow(unused_imports)]
 use dioxus::prelude::*;
 use js_sys::wasm_bindgen::JsError;
+use message::codec::CodecType;
 use minijinja::Environment;
 use serde_json::{Value, from_str, to_string, to_string_pretty};
 use std::collections::HashMap;
@@ -112,8 +113,8 @@ fn dispatch(
     }
 }
 
-pub fn use_status(url: &str) -> Result<Status, JsError> {
-    let ws = use_web_socket(url)?;
+pub fn use_status(url: &str, codec_type: CodecType) -> Result<Status, JsError> {
+    let ws = use_web_socket(url, codec_type)?;
     let x = ws.message_texts();
 
     let mut layout = use_signal::<Brick>(|| {

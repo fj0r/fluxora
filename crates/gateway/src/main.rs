@@ -13,6 +13,7 @@ use libs::config::{ASSETS_PATH, Config, LiveConfig, LogFormat};
 use libs::shared::{Sender, StateChat};
 use libs::template::Tmpls;
 use libs::websocket::{handle_ws, send_to_ws};
+use message::codec::{ActiveCodec, CodecType};
 use message::queue::MessageQueue;
 use serde_json::{Map, Value};
 use std::sync::Arc;
@@ -50,6 +51,9 @@ async fn main() -> Result<()> {
 
     let queue = config.load().queue.clone();
 
+    // Initialize codec
+    let codec = ActiveCodec::new(config.load().codec);
+
     let (outgo_tx, income_rx) = if !queue.disable {
         queue.split().await
     } else {
@@ -63,8 +67,9 @@ async fn main() -> Result<()> {
         bail!("outgo channel invalid");
     };
 
-    send_to_ws(rx, &shared).await;
+    send_to_ws(rx, &shared, codec.clone()).await;
 
+    let codec_for_router = codec.clone();
     let app = Router::new()
         .route(
             "/channel",
@@ -90,9 +95,10 @@ async fn main() -> Result<()> {
                     };
 
                     let logout = s.hooks.get("logout").unwrap()[0].clone();
+                    let codec = codec_for_router.clone();
                     drop(s);
                     ws.on_upgrade(async move |socket| {
-                        handle_ws(socket, tx, state, config, tmpls.clone(), &a).await;
+                        handle_ws(socket, tx, state, config, tmpls.clone(), codec, &a).await;
                         let _ = logout.handle::<Value>(&a.into(), tmpls.clone()).await;
                     })
                 },

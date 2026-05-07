@@ -3,6 +3,7 @@ use figment::{
     providers::{Env, Format, Toml},
 };
 use indexmap::IndexMap;
+use message::codec::CodecType;
 use message::config::Queue;
 use notify::{Event, RecursiveMode, Result as ResultN, Watcher, recommended_watcher};
 use serde::{Deserialize, Serialize};
@@ -84,6 +85,8 @@ pub struct Config {
     pub hooks: HookMap,
     pub trace: Log,
     pub login_with_cookie: bool,
+    #[serde(default)]
+    pub codec: CodecType,
 }
 
 impl Config {

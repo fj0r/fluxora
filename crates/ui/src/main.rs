@@ -2,6 +2,7 @@ mod libs;
 use dioxus::prelude::*;
 use libs::components::*;
 use libs::store::{Status, use_status};
+use message::codec::CodecType;
 use tracing_wasm::WASMLayerConfigBuilder;
 
 #[allow(unused_macros)]
@@ -16,6 +17,7 @@ static STATUS: GlobalSignal<Status> = Global::new(|| {
     let loc = doc.location().unwrap();
     let mut host = "".to_owned();
     let mut token = None;
+    let mut codec_type = CodecType::Bincode; // Default to Bincode
     if let Ok(Some(ele)) = doc.query_selector("#main") {
         if let Some(h) = ele.get_attribute("data-host") {
             host = h;
@@ -28,6 +30,12 @@ static STATUS: GlobalSignal<Status> = Global::new(|| {
             && let Some(t) = href.search_params().get("token")
         {
             token = Some(t);
+            // Extract codec from URL params if available, otherwise fallback to default
+            if let Some(codec_str) = href.search_params().get("codec") {
+                if let Ok(t) = codec_str.parse::<CodecType>() {
+                    codec_type = t;
+                }
+            }
         } else if let Some(t) = ele.get_attribute("data-token") {
             token = Some(t);
         };
@@ -38,7 +46,7 @@ static STATUS: GlobalSignal<Status> = Global::new(|| {
         "".to_owned()
     };
     let url = format!("ws://{}/channel{}", host, query);
-    use_status(&url).expect("connecting failed")
+    use_status(&url, codec_type).expect("connecting failed")
 });
 
 fn main() {

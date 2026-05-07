@@ -48,6 +48,7 @@ macro_rules! iggy_conn {
     };
 }
 
+#[cfg(feature = "iggy")]
 iggy_conn![IggyIncomeConfig, IggyOutgoConfig];
 
 #[derive(Debug, Deserialize, Clone)]

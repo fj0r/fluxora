@@ -1,5 +1,3 @@
-//! Web socket hooks.
-
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -10,6 +8,7 @@ use gloo_net::websocket;
 use gloo_net::websocket::WebSocketError;
 use gloo_net::websocket::futures::WebSocket;
 use js_sys::wasm_bindgen::JsError;
+use message::codec::{ActiveCodec, CodecType};
 
 pub use gloo_net::websocket::Message;
 
@@ -18,15 +17,14 @@ pub struct WebSocketHandle {
     ws_write: Signal<Rc<RefCell<SplitSink<WebSocket, Message>>>>,
     state: Signal<websocket::State>,
     message: Signal<String>,
-    message_bytes: Signal<Vec<u8>>,
 }
 
-/// Opens a web socket connection at the specified `url`. The connection is closed when the enclosing scope is destroyed
-/// or when [`WebSocketHandle::close`] is called.
-pub fn use_web_socket(url: &str) -> Result<WebSocketHandle, JsError> {
+/// Opens a web socket connection at the specified `url`.
+/// Decodes incoming messages using the specified `codec_type`.
+pub fn use_web_socket(url: &str, codec_type: CodecType) -> Result<WebSocketHandle, JsError> {
     let state = use_signal(|| websocket::State::Closed);
     let mut message = use_signal(String::new);
-    let mut message_bytes = use_signal(Vec::new);
+    let codec = ActiveCodec::new(codec_type);
 
     let ws = WebSocket::open(url)?;
     let (write, mut read) = ws.split();
@@ -34,8 +32,17 @@ pub fn use_web_socket(url: &str) -> Result<WebSocketHandle, JsError> {
     spawn(async move {
         while let Some(Ok(m)) = read.next().await {
             match m {
-                Message::Text(t) => message.set(t),
-                Message::Bytes(b) => message_bytes.set(b),
+                Message::Text(t) => {
+                    // Fallback for text if sent
+                    message.set(t);
+                }
+                Message::Bytes(b) => {
+                    if let Ok(decoded) = codec.decode::<String>(&b) {
+                        message.set(decoded);
+                    } else if let Ok(decoded) = String::from_utf8(b.clone()) {
+                        message.set(decoded);
+                    }
+                }
             }
         }
     });
@@ -44,7 +51,6 @@ pub fn use_web_socket(url: &str) -> Result<WebSocketHandle, JsError> {
         ws_write: use_signal(|| Rc::new(RefCell::new(write))),
         state,
         message,
-        message_bytes,
     })
 }
 
@@ -62,11 +68,6 @@ impl WebSocketHandle {
 
     pub fn message_texts(self) -> Signal<String> {
         self.message
-    }
-
-    #[allow(unused)]
-    pub fn message_bytes(self) -> Signal<Vec<u8>> {
-        self.message_bytes
     }
 
     /// NOTE: Not yet implemented due to technical reasons.

@@ -2,14 +2,17 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::Debug;
 
+pub mod codec;
 pub mod session;
 use session::Session;
 pub mod config;
 #[cfg(feature = "iggy")]
 mod iggy;
+#[cfg(any(feature = "kafka", feature = "iggy"))]
 pub mod instance;
 #[cfg(feature = "kafka")]
 mod kafka;
+#[cfg(any(feature = "kafka", feature = "iggy"))]
 pub mod queue;
 pub mod time;
 
