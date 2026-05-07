@@ -1,36 +1,62 @@
-# Events flow. Intelligence appears.
+# Fluxora
 
-gateway
-```nu
-use ,.nu
-, rpk up # --external host.docker.internal
-, gw up
+> Events flow. Intelligence appears.
+
+An **event-driven, AI-native UI framework** built in Rust. Fluxora decouples business logic from presentation through a message-queue-centric architecture, using a declarative JSON DSL (`Brick`) to describe interfaces. AI generates structured JSON (not code), validated by auto-exported JSON Schema, rendered dynamically by Dioxus/WASM.
+
+## Architecture
+
+```
+┌──────────┐   WS    ┌──────────┐  outgo   ┌─────────────────┐
+│   UI     │◄───────►│ Gateway  │─────────►│ Business Service│
+│ (Dioxus) │         │ (Axum)   │          │ (Chat, CRM, AI…)│
+└──────────┘         └────┬─────┘          └────────┬────────┘
+                          │   income                │
+                          └─────────────────────────┘
 ```
 
-ui
+- **UI**: WASM frontend (Dioxus) renders `Brick` JSON trees. Components bind to event names — no API URLs, no HTTP verbs.
+- **Gateway**: WebSocket router. Dispatches UI events to Kafka/Iggy `outgo` queue; delivers backend `income` messages to the correct WS session.
+- **Business Services**: Independent consumers of `outgo`/`income`. Each service (chat, crm, echo, analysis…) handles its own logic, calls AI, pushes results back. Services are **transparent** to each other — an analysis service can intercept chat streams without the chat service knowing.
+
+## Quick Start
+
+### Gateway
+
 ```nu
-use ,.nu
-, ui up
+use x.nu
+x rpk up          # --external host.docker.internal
+x gw up
 ```
 
+### UI
 
-## chat
 ```nu
-use ,.nu
-, pg up
-, pg migrate
-, chat up
+use x.nu
+x ui up
 ```
 
-# Design
+### Chat Service (demo)
+
+```nu
+use x.nu
+x pg up
+x pg migrate
+x chat up
+```
+
+## Design
+
+### Data Flow
+
 ```mermaid
 graph TD
     subgraph UI
-        A[User Input Field] --> B{Sends a message};
+        A[User Input] --> B{Sends a message};
     end
 
     subgraph User-Facing Components
-        B --> C[Bind to 'chat' event on WS];
+        B --> C[Bind to event on WS];
         C --> D[Send message via WS to Gateway];
     end
 
@@ -40,62 +66,151 @@ graph TD
     end
 
     subgraph Backend Services
-        F --> G[Business Service listens to 'outgo' queue];
-        G --> H{Detects 'chat' event};
+        F --> G[Business Service listens to 'outgo'];
+        G --> H{Detects event};
         H --> I[Processes message and calls AI];
         I --> J[AI generates response];
-        J --> K[Business Service places AI response into Kafka 'income' queue];
+        J --> K[Service places response into Kafka 'income' queue];
     end
 
     subgraph Gateway
         K --> L[GW listens to 'income' queue];
-        L --> M[GW receives message with recipient info];
-        M --> N[GW forwards message to corresponding WS];
+        L --> M[GW forwards to corresponding WS session];
     end
 
     subgraph User-Facing Components
-        N --> O[WS receives message];
+        M --> N[WS receives message];
     end
 
     subgraph UI
-        O --> P[UI renders chat content];
+        N --> O[UI renders Brick content];
     end
 ```
-Flow Description:
-- User Input: A user types a message into the input field on the UI.
-- Bind to 'chat' event: The UI binds the message to a 'chat' event on the WebSocket (WS).
-- Send to Gateway (GW): The UI sends the message via the WS to the GW.
-- GW Receives Message: The GW, acting purely as a message router, receives the incoming message.
-- Place in 'outgo' queue: The GW places the message into a Kafka queue named 'outgo' for processing by backend services.
-- Business Service Listens: A backend business service continuously listens to the 'outgo' queue.
-- Detects 'chat' event: The business service retrieves the message and identifies it as a 'chat' event.
-- Call AI: The business service processes the message and sends it to the AI for a response.
-- AI Generates Response: The AI processes the request and generates a response.
-- Place in 'income' queue: The business service places the AI's response into another Kafka queue named 'income'.
-- GW Listens to 'income': The GW also listens to the 'income' queue for outgoing messages.
-- GW Receives with Recipient Info: The GW retrieves the AI's response, which includes information about the intended recipient on its "envelope".
-- Forward to WS: The GW uses the recipient information to send the message to the corresponding WS connection.
-- WS Receives Message: The WS receives the message from the GW.
-- UI Renders Content: The UI receives the message from the WS and renders the new chat content.
 
-## message broker
+### Core Concepts
 
-## control center
-In the `chat/src/libs/logic` directory, there are several control centers (business logic is implemented here, and they are separate services, so they're called control centers).
+#### 1. Brick DSL — Declarative JSON UI
 
-`echo` is the simplest one - it echoes back whatever you send, similar in nature to hello world.
+The `brick` crate defines a typed JSON object tree for describing UI components. Every component is a `#[serde(tag = "type")]` enum variant — unambiguous, token-efficient, and schema-derivable.
 
-`chat` is like slack-style chat, divided by channels.
+```json
+{
+  "type": "rack",
+  "id": "main",
+  "sub": [
+    { "type": "text", "bind": { "source": "chat.msg" } },
+    { "type": "input", "bind": { "event": "chat.send", "type": "text" } }
+  ]
+}
+```
 
-`crm` is for AI customer service - both users chatting and backend customer service agents can see it (if they need to grab orders), and it assigns users to one or more agents.
+Key properties:
+- **`sub`**: recursive child nesting (tree structure).
+- **`item`**: list item template (for `rack`, `fold`).
+- **`bind`**: declarative data/event binding. No API URLs, no fetch/axios.
+- **`id`**: unique identifier for streaming merge targeting.
 
-Users see a single chat box, while customer service sees multiple channels, so `chat` needs to be implemented first.
+#### 2. Declarative Binding
 
-## UI
-### menu
-Currently, components basically bind to a single value, for example, a text input box corresponds to a string "xxx"
-For menus, there are two values: one is all the candidate options, and the other is the already selected value
-Previously, I thought about putting the candidate options in children, but it's not convenient for dynamic binding, and defining styles is also cumbersome (normally define an item value as the style for all child items, rather than wrapping all child items with styles and copying them N times (referencing the rack component design)
+Components declare what events they listen to or emit — **not how to call APIs**.
 
-If a component can bind to multiple values, one approach is to add an additional field on top of the (existing) value field. But this can get messy and inconsistent
-Another approach is to refactor the value field to accept multiple values. But this involves more changes (this shows the advantage of Rust; if it were JavaScript, I wouldn't even dare to imagine how painful it would be), and additionally, you need to declare extra fields when binding (but you can specify a default value)
+```json
+{
+  "bind": {
+    "chat_input": { "event": "chat.send", "type": "text" },
+    "chat_output": { "source": "chat.msg" }
+  }
+}
+```
+
+- **`source`**: listen to an event stream (GET-equivalent).
+- **`event`**: emit an event (POST-equivalent).
+- **`target` / `field` / `submit`**: advanced binding modes.
+
+The Gateway maps event names to Kafka topics automatically. Input components implicitly POST; display components implicitly GET.
+
+#### 3. Template System
+
+For fixed business scenarios, UI is defined as **templates** (minijinja), not AI-generated on the fly.
+
+```
+Business Service → returns pure data
+                 → Gateway applies template → renders Brick JSON → UI
+```
+
+- Templates are registered at startup or via metadata API.
+- `/api/cart` returns raw data; `/ui/cart` applies `template_cart`.
+- Webhooks can intercept specific events (e.g., login) for special handling.
+- Business services and internal APIs are completely template-agnostic.
+
+#### 4. Streaming Merge — Localized Path Updates
+
+AI responses are streamed token-by-token. Fluxora merges updates **relative to the component's bound data source**, not globally.
+
+```rust
+// Three merge strategies:
+Replace   // overwrite the value
+Concat    // append (text concat, number add, array push, object merge)
+Delete    // remove (string replace, number subtract, object key removal)
+```
+
+Components merge by `id` matching. Multiple services can stream to the same page simultaneously without conflicts — each component's merge is isolated to its own data boundary.
+
+#### 5. AI-Native, Not AI-Dependent
+
+- **Design-time**: AI generates `Brick` JSON + mock data → preview in UI → save as template.
+- **Run-time**: templates render at millisecond speed, zero LLM latency.
+- **Exploratory**: AI generates one-off UIs dynamically (dashboards, presentations) when structure is unpredictable.
+- **Hybrid**: fixed business uses templates; dynamic scenarios use AI generation.
+
+## Crates
+
+| Crate | Description |
+|-------|-------------|
+| `brick` | Core JSON DSL — Brick enum, attributes, binding, serialization, JsonSchema export |
+| `brick_macro` | Derive macros for `BrickOps`, `ClassifyBrick`, `ClassifyAttrs`, render hints |
+| `message` | Unified message protocol — Envelope, ChatMessage, Event trait, Kafka/Iggy adapters |
+| `content` | Content action types — Create, Set, Join, Tmpl, Empty. Method enum (Replace/Concat/Delete) |
+| `gateway` | WebSocket router + template engine + webhook dispatcher + session management |
+| `ui` | Dioxus/WASM frontend — Frame renderer, dynamic component dispatch, WS store, streaming merge |
+| `ui_macro` | UI component derive macros |
+| `chat` | Demo business service — channel-based chat with user/agent management |
+| `agent` | Agent service skeleton |
+
+## Key Design Decisions
+
+### Why JSON, not JSX/HTML?
+- **LLM Efficiency**: LLMs generate structured JSON with far fewer tokens and higher accuracy than raw code.
+- **Schema Validation**: Auto-exported JSON Schema (from Rust types) provides deterministic validation.
+- **Error Recovery**: Invalid output triggers automatic rewrite — no "broken UI" from hallucinated code.
+
+### Protocol Agnosticism & Configurable Codecs
+- **Codec Trait Architecture**: The message layer is decoupled from the serialization format via a generic `Codec` trait, allowing the wire protocol to be specified via configuration.
+- **Bincode Default**: **Bincode** is implemented and enabled as the primary binary protocol. For the current internal/personal use case, the performance benefits outweigh the need for cross-language compatibility.
+- **Extensibility (CBOR)**: Interfaces for alternative protocols like **CBOR** are preserved. If a polyglot frontend (e.g., JS) is introduced later, the system can switch to CBOR without architectural changes.
+- **Separation of Concerns**: The *DSL* remains JSON-structured for AI compatibility and debuggability, while the *transport* uses efficient binary encoding.
+
+### Why Event Sourcing?
+- **Decoupling**: Business services are independent Kafka consumers. Add/remove services without touching others.
+- **Auditability**: Full event history enables replay, debugging, and AI analysis.
+- **Multi-Agent Collaboration**: Services can transparently intercept streams and inject responses.
+
+### Why Separate Queues?
+- **Flow Control**: AI streaming messages are high-frequency and fragmented. A dedicated queue prevents them from blocking low-frequency control messages (system notifications, user joins, etc.).
+
+### Merge Strategy: Streaming UX & Structural Routing
+- **Mandatory Deserialization**: Every incoming message must be fully deserialized to identify the target component and update path. We prioritize accurate structural routing over raw byte-append optimizations.
+- **Smoothness vs. Efficiency**: We merge updates frequently (per token) to ensure fluid UI rendering ("typing effect"). While this incurs higher CPU/memory costs (allocation, expansion) compared to a single "bulk copy," it prevents browser lag and jank, which is the priority for user experience.
+- **Protocol Overhead**: The layered message structure (metadata, receivers, routing) implies that for small payloads (like a single token), the protocol overhead exceeds the payload size. This is an inherent cost of the decoupled, event-driven architecture.
+- **Mitigation**: We use `Vec<String>` buffers for text content to mitigate repeated allocation costs during streaming, though this is a secondary optimization to the core **Declarative Binding** design which drives the architecture.
+- **Localized Scope**: Global state reconciliation is O(N²) and error-prone. Localized merge (per-component, per-data-source) is O(N) and conflict-free. Each component owns its data lifecycle.
+
+### Component Atomicity: Table & SVG
+- **Direct Mapping**: Components like `Table` and `SVG` are kept **atomic** and map directly to standard HTML/SVG elements.
+- **AI Alignment**: LLMs are heavily trained on standard HTML/SVG. Keeping these atoms ensures high generation accuracy.
+- **No Over-Abstraction**: Encapsulating these into "semantic wrappers" is unnecessary and hinders flexibility.
+
+### Concurrency: Sync Template Engine
+- **CPU-Bound Nature**: Template rendering (`minijinja`) is purely computational (no IO). The blocking time is negligible (microseconds).
+- **Overhead Avoidance**: Using `spawn_blocking` or complex async wrappers adds unnecessary overhead for lightweight text processing.
+- **Scalability**: The system handles sync rendering efficiently; async offloading is reserved for high-concurrency/heavy-template scenarios only.
