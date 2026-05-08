@@ -8,6 +8,7 @@ use dashmap::{
 };
 use message::{
     ChatMessage,
+    codec::{ActiveCodec, CodecType},
     session::{Session, SessionCount},
     time::Created,
 };
@@ -15,6 +16,18 @@ use serde_json::{Map, Value};
 use std::{fmt::Debug, ops::Deref, sync::Arc};
 use time::OffsetDateTime;
 use tokio::sync::{RwLock, mpsc::UnboundedSender};
+
+/// Encode a value and wrap it in the appropriate WS frame type (Text/JSON vs Binary/CBOR).
+pub fn encode_ws<T: serde::Serialize>(codec: CodecType, value: &T) -> Option<axum::extract::ws::Message> {
+    let bytes = ActiveCodec::new(codec).encode(value).ok()?;
+    Some(match codec {
+        CodecType::Json => {
+            let s = String::from_utf8(bytes).unwrap_or_default();
+            axum::extract::ws::Message::Text(s.into())
+        }
+        CodecType::Cbor => axum::extract::ws::Message::Binary(bytes.into()),
+    })
+}
 
 #[derive(Clone, Debug)]
 pub struct SessionManager<T> {
@@ -54,6 +67,12 @@ impl<T> SessionManager<T> {
 
     pub fn entry(&self, k: Session) -> Entry<'_, Session, T> {
         self.map.entry(k)
+    }
+
+    /// Returns a mutable reference to the value for the given key.
+    /// Returns `None` if the key is not present.
+    pub fn get_mut(&self, k: &Session) -> Option<dashmap::mapref::one::RefMut<'_, Session, T>> {
+        self.map.get_mut(k)
     }
 }
 
@@ -98,9 +117,10 @@ pub type Info = Map<String, Value>;
 pub struct Client<T> {
     pub sender: T,
     pub term: tokio::sync::mpsc::Sender<bool>,
-    //pub last_activity: OffsetDateTime,
     pub created: OffsetDateTime,
     pub info: Info,
+    /// Adaptive codec — set from first WS frame, used for all outgoing messages.
+    pub hint: CodecType,
 }
 
 impl<T> Deref for Client<T> {

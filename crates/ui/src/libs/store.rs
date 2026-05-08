@@ -8,9 +8,10 @@ use content::{Content, Message, Method, Outflow};
 #[allow(unused_imports)]
 use dioxus::prelude::*;
 use js_sys::wasm_bindgen::JsError;
-use message::codec::CodecType;
+use message::codec::ActiveCodec;
 use minijinja::Environment;
-use serde_json::{Value, from_str, to_string, to_string_pretty};
+use ciborium::ser::into_writer;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
 use std::sync::{LazyLock, RwLock};
@@ -37,8 +38,9 @@ impl Status {
             data: content,
         };
 
-        if let Ok(msg) = to_string::<Outflow>(&x) {
-            let msg = gloo_net::websocket::Message::Text(msg);
+        let mut buf = Vec::new();
+        if into_writer(&x, &mut buf).is_ok() {
+            let msg = gloo_net::websocket::Message::Bytes(buf);
             let _ = self.ws.send(msg).await;
         }
     }
@@ -113,9 +115,9 @@ fn dispatch(
     }
 }
 
-pub fn use_status(url: &str, codec_type: CodecType) -> Result<Status, JsError> {
-    let ws = use_web_socket(url, codec_type)?;
-    let x = ws.message_texts();
+pub fn use_status(url: &str, codec: ActiveCodec) -> Result<Status, JsError> {
+    let ws = use_web_socket(url)?;
+    let bytes_signal = ws.message_bytes();
 
     let mut layout = use_signal::<Brick>(|| {
         Brick::text(brick::Text {
@@ -126,18 +128,15 @@ pub fn use_status(url: &str, codec_type: CodecType) -> Result<Status, JsError> {
     let mut list = use_signal::<HashMap<String, Vec<Brick>>>(HashMap::new);
 
     use_memo(move || {
-        let act = &x();
-        if !act.is_empty() {
-            match from_str::<Message<Brick>>(act) {
+        let b = &bytes_signal();
+        if !b.is_empty() {
+            match codec.decode::<Message<Brick>>(b) {
                 Ok(act) => dispatch(act, &mut layout, &mut data, &mut list),
                 Err(err) => {
-                    if let Ok(act) = &from_str::<serde_json::Value>(act)
-                        && let Ok(act) = to_string_pretty(act)
-                    {
+                    if let Ok(act) = &String::from_utf8(b.clone()) {
                         dioxus::logger::tracing::info!(
-                            "deserialize from_str error:\n {:#?}\n{}",
-                            err,
-                            act
+                            "deserialize error: {:#?}\n{}",
+                            err, act
                         )
                     }
                 }

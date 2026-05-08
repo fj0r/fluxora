@@ -12,12 +12,16 @@ pub enum CodecError {
     Unsupported(String),
 }
 
-/// 用于配置文件解析 (如 config.toml 中的 codec = "bincode")
+/// Parsed from config files (e.g. `config.toml` with `codec = "cbor"`).
+///
+/// Bincode was removed — see `docs/decisions/001-reject-bincode-for-cbor.md`:
+/// - serde 2.x incompatible (v1.x broken, v2.x API unstable)
+/// - No type self-description; Gateway cannot partially parse routing metadata
+/// - CBOR (`ciborium`) covers all advantages and adds cross-language support
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Deserialize)]
 pub enum CodecType {
     Json,
     #[default]
-    Bincode,
     Cbor,
 }
 
@@ -26,7 +30,6 @@ impl FromStr for CodecType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().trim() {
             "json" => Ok(Self::Json),
-            "bincode" => Ok(Self::Bincode),
             "cbor" => Ok(Self::Cbor),
             _ => Err(CodecError::Unsupported(s.into())),
         }
@@ -35,10 +38,9 @@ impl FromStr for CodecType {
 
 /// 用于运行时执行 (替代 Box<dyn Codec>)
 /// 去除了冗余的内部结构体，直接内联逻辑
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum ActiveCodec {
     Json,
-    Bincode,
     Cbor,
 }
 
@@ -46,15 +48,21 @@ impl ActiveCodec {
     pub fn new(t: CodecType) -> Self {
         match t {
             CodecType::Json => Self::Json,
-            CodecType::Bincode => Self::Bincode,
             CodecType::Cbor => Self::Cbor,
+        }
+    }
+
+    /// Returns the config-level `CodecType` corresponding to this active codec.
+    pub fn as_type(&self) -> CodecType {
+        match self {
+            Self::Json => CodecType::Json,
+            Self::Cbor => CodecType::Cbor,
         }
     }
 
     pub fn encode<T: Serialize>(&self, value: &T) -> Result<Vec<u8>, CodecError> {
         match self {
             Self::Json => serde_json::to_vec(value).map_err(|e| CodecError::Encode(e.to_string())),
-            Self::Bincode => bincode::serialize(value).map_err(|e| CodecError::Encode(e.to_string())),
             Self::Cbor => {
                 let mut out = Vec::new();
                 ciborium::ser::into_writer(value, &mut out)
@@ -67,7 +75,6 @@ impl ActiveCodec {
     pub fn decode<T: DeserializeOwned>(&self, bytes: &[u8]) -> Result<T, CodecError> {
         match self {
             Self::Json => serde_json::from_slice(bytes).map_err(|e| CodecError::Decode(e.to_string())),
-            Self::Bincode => bincode::deserialize(bytes).map_err(|e| CodecError::Decode(e.to_string())),
             Self::Cbor => {
                 let mut cursor = std::io::Cursor::new(bytes);
                 ciborium::de::from_reader(&mut cursor).map_err(|e| CodecError::Decode(e.to_string()))

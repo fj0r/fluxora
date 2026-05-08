@@ -13,7 +13,7 @@ use libs::config::{ASSETS_PATH, Config, LiveConfig, LogFormat};
 use libs::shared::{Sender, StateChat};
 use libs::template::Tmpls;
 use libs::websocket::{handle_ws, send_to_ws};
-use message::codec::{ActiveCodec, CodecType};
+use message::codec::ActiveCodec;
 use message::queue::MessageQueue;
 use serde_json::{Map, Value};
 use std::sync::Arc;
@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
         bail!("outgo channel invalid");
     };
 
-    send_to_ws(rx, &shared, codec.clone()).await;
+    send_to_ws(rx, &shared).await;
 
     let codec_for_router = codec.clone();
     let app = Router::new()

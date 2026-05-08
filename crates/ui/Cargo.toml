@@ -12,6 +12,7 @@ brick = { workspace = true } #unified
 chrono.workspace = true
 content = { workspace = true } #unified
 message = { path = "../message", default-features = false }
+ciborium.workspace = true
 dioxus.features = ["macro", "web"]
 dioxus.workspace = true
 futures.workspace = true

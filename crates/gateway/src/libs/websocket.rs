@@ -1,7 +1,7 @@
 use super::config::{Config, Hook};
-use super::shared::{Client, StateChat};
+use super::shared::{encode_ws, Client, StateChat};
 use super::template::Tmpls;
-use message::codec::ActiveCodec;
+use message::codec::{ActiveCodec, CodecType};
 use anyhow::{Ok as Okk, Result};
 use arc_swap::ArcSwap;
 use axum::extract::ws::WebSocket;
@@ -22,19 +22,6 @@ use tokio::sync::{
     mpsc::{UnboundedReceiver, UnboundedSender},
 };
 
-/* TODO:
-use std::async_iter;
-
-struct GreetIter<'a> {
-    index: usize,
-    greet: &'a AssetsList,
-    context: &'a minijinja::Value,
-}
-
-impl<'a> AsyncIterator for GreetIter<'a> {
-}
-*/
-
 impl Hook {
     async fn greet<T>(&self, context: &Map<String, Value>, tmpls: Arc<Tmpls<'_>>) -> Result<T>
     where
@@ -52,7 +39,7 @@ pub async fn handle_ws<T>(
     state: StateChat<UnboundedSender<T>>,
     config: Arc<ArcSwap<Config>>,
     tmpls: Arc<Tmpls<'static>>,
-    codec: ActiveCodec,
+    default_codec: ActiveCodec,
     session: &SessionInfo,
 ) where
     T: Event<Created>
@@ -70,11 +57,15 @@ pub async fn handle_ws<T>(
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<T>();
     let (term_tx, mut term_rx) = tokio::sync::mpsc::channel(1);
 
+    // Initial hint from configured codec — updated when first frame arrives
+    let hint = default_codec.as_type();
+
     let new_client = Client {
         sender: tx.clone(),
         term: term_tx.clone(),
         info: session.info.clone(),
         created: OffsetDateTime::now_utc(),
+        hint,
     };
     {
         match state.session.entry(session.id.clone()) {
@@ -95,15 +86,13 @@ pub async fn handle_ws<T>(
     context.insert("session_id".into(), session.id.clone().into());
     context.insert("info".into(), Value::Object(session.info.clone()));
 
-    // Greet messages
+    // Greet: use configured codec (before any frame type is detected)
     if let Some(greet) = config_reader.hooks.get("greet") {
         for g in greet.iter() {
             match g.greet::<T>(&context, tmpls.clone()).await {
                 Ok(payload) => {
-                    if let Ok(bytes) = codec.encode(&payload) {
-                        let _ = sender
-                            .send(axum::extract::ws::Message::Binary(bytes.into()))
-                            .await;
+                    if let Some(ws_msg) = encode_ws(hint, &payload) {
+                        let _ = sender.send(ws_msg).await;
                     }
                 }
                 Err(e) => {
@@ -113,67 +102,56 @@ pub async fn handle_ws<T>(
         }
     }
 
-    let replaced = Arc::new(Mutex::new(false));
-    let r1 = replaced.clone();
-    let codec_send = codec.clone();
-    let mut send_task = tokio::spawn(async move {
-        loop {
-            tokio::select! {
-                Some(msg) = rx.recv() => {
-                    if let Ok(bytes) = codec_send.encode(&msg) {
-                        if sender
-                            .send(axum::extract::ws::Message::Binary(bytes.into()))
-                            .await
-                            .is_err()
-                        {
-                            break;
-                        }
-                    }
-                },
-                Some(_) = term_rx.recv() => {
-                    break;
-                },
-                else => {}
-            }
-        }
-        *r1.lock().await = true;
-        let _ = sender.close().await;
-        Okk(())
-    });
-
     let sid_cloned = session.id.clone();
     let hooks = config_reader.hooks.clone();
-    drop(config_reader); // release lock
+    let state_cloned = state.clone();
+    let state_for_send = state.clone();
+    let sid_for_send = session.id.clone();
+    drop(config_reader);
+
     let mut recv_task = tokio::spawn(async move {
         #[allow(unused_mut)]
         let mut sid = sid_cloned;
 
         while let Some(Ok(msg)) = receiver.next().await {
-            // Extract bytes from Text or Binary
-            let bytes = match msg {
-                axum::extract::ws::Message::Text(t) => t.as_bytes().to_vec(),
-                axum::extract::ws::Message::Binary(b) => b.to_vec(),
+            // Detect codec from frame type, persist hint for all future sends
+            let value = match msg {
+                axum::extract::ws::Message::Text(t) => {
+                    if let Some(mut c) = state_cloned.session.get_mut(&sid) {
+                        c.hint = CodecType::Json;
+                    }
+                    match serde_json::from_str::<serde_json::Value>(&t) {
+                        Ok(v) => v,
+                        Err(e) => {
+                            tracing::error!("JSON decode: {:?}", e);
+                            continue;
+                        }
+                    }
+                }
+                axum::extract::ws::Message::Binary(b) => {
+                    if let Some(mut c) = state_cloned.session.get_mut(&sid) {
+                        c.hint = CodecType::Cbor;
+                    }
+                    let mut cursor = std::io::Cursor::new(&b);
+                    match ciborium::de::from_reader::<serde_json::Value, _>(&mut cursor) {
+                        Ok(v) => v,
+                        Err(e) => {
+                            tracing::error!("CBOR decode: {:?}", e);
+                            continue;
+                        }
+                    }
+                }
                 _ => continue,
             };
-            
-            let value = match codec.decode::<serde_json::Value>(&bytes) {
-                Ok(v) => v,
-                Err(e) => {
-                    tracing::error!("Codec decode failed: {:?}", e);
-                    continue;
-                }
-            };
+
             let chat_msg: T = (sid.clone(), value).into();
 
-            // TODO: process messages in batches?
             if let Some(ev) = chat_msg.event()
                 && hooks.contains_key(ev)
                 && let Some(wh) = hooks.get(ev)
             {
                 for h in wh {
-                    if h.disable {
-                        continue;
-                    }
+                    if h.disable { continue; }
                     match h.variant.handle(to_value(&chat_msg)?).await {
                         Ok(r) => {
                             let _ = tx.send((sid.clone(), r).into());
@@ -181,7 +159,6 @@ pub async fn handle_ws<T>(
                         Err(e) => {
                             context.insert("event".into(), ev.into());
                             context.insert("error".into(), e.to_string().into());
-                            // Error message rendering (still uses template, so JSON string)
                             if let Ok(t) = tmpls.get_template("webhook_error.json")?.render(&context) {
                                 let _ = tx.send(serde_json::from_str(&t)?);
                             }
@@ -189,12 +166,38 @@ pub async fn handle_ws<T>(
                     }
                 }
             } else {
-                // send to event MQ
                 let _ = outgo_tx.send(chat_msg.clone());
             }
 
             tracing::debug!("[ws] {:?}", &chat_msg);
         }
+        Okk(())
+    });
+
+    let replaced = Arc::new(Mutex::new(false));
+    let r1 = replaced.clone();
+    let mut send_task = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+                Some(msg) = rx.recv() => {
+                    let hint = state_for_send
+                        .session
+                        .get(&sid_for_send)
+                        .map(|c| c.hint)
+                        .unwrap_or(CodecType::Cbor);
+
+                    if let Some(ws_msg) = encode_ws(hint, &msg) {
+                        if sender.send(ws_msg).await.is_err() {
+                            break;
+                        }
+                    }
+                },
+                Some(_) = term_rx.recv() => { break; },
+                else => {}
+            }
+        }
+        *r1.lock().await = true;
+        let _ = sender.close().await;
         Okk(())
     });
 
@@ -217,7 +220,6 @@ use message::{ChatMessage, Envelope};
 pub async fn send_to_ws(
     income_rx: Arc<Mutex<UnboundedReceiver<Envelope<Created>>>>,
     shared: &StateChat<UnboundedSender<ChatMessage<Created>>>,
-    _codec: ActiveCodec, // Passed for future use or consistency, currently just routing
 ) {
     let shared = shared.clone();
     tokio::spawn(async move {
@@ -227,8 +229,7 @@ pub async fn send_to_ws(
             if !x.receiver.is_empty() {
                 for r in x.receiver {
                     if shared.session.contains_key(&r) {
-                        let s = shared.session.get(&r)?;
-                        let _ = s.send(x.message.clone());
+                        let _ = shared.session.get(&r).map(|c| c.send(x.message.clone()));
                     }
                 }
             }

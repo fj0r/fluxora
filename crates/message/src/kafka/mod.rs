@@ -5,6 +5,7 @@ use crate::{
     queue::{MessageQueueIncome, MessageQueueOutgo},
 };
 use anyhow::Result;
+use ciborium::ser::into_writer;
 use config::{KafkaIncomeConfig, KafkaOutgoConfig};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -63,11 +64,15 @@ where
         spawn(async move {
             // let topic : Vec<&str> = producer_cfg.topic.iter().map(<_>::as_ref).collect();
             while let Some(value) = rx.recv().await {
-                let value = serde_json::to_string(&value).expect("serde to string");
+                let mut buf = Vec::new();
+                if let Err(e) = into_writer(&value, &mut buf) {
+                    error!("CBOR encode failed: {}", e);
+                    continue;
+                }
                 let _delivery_status = producer
                     .send(
                         FutureRecord::to(&cfg.topic)
-                            .payload(&value)
+                            .payload(&buf)
                             .key("")
                             .headers(OwnedHeaders::new().insert(Header {
                                 key: "",
@@ -140,16 +145,17 @@ where
                 match consumer.recv().await {
                     Err(e) => warn!("Kafka error: {}", e),
                     Ok(m) => {
-                        let payload = match m.payload_view::<str>() {
-                            None => "",
-                            Some(Ok(s)) => s,
-                            Some(Err(e)) => {
-                                warn!("Error while deserializing message payload: {:?}", e);
-                                ""
+                        let payload = match m.payload() {
+                            Some(bytes) => bytes,
+                            None => {
+                                warn!("Empty message payload");
+                                consumer.commit_message(&m, CommitMode::Async).unwrap();
+                                continue;
                             }
                         };
 
-                        match serde_json::from_str::<Self::Item>(payload) {
+                        let mut cursor = std::io::Cursor::new(payload);
+                        match ciborium::de::from_reader::<Self::Item, _>(&mut cursor) {
                             Ok(mut value) => {
                                 value.set_time(m.timestamp().into());
                                 if let Err(e) = tx.send(value) {
@@ -157,7 +163,7 @@ where
                                 }
                             }
                             Err(e) => {
-                                error!("Failed to deserialize: {:?}", e);
+                                error!("Failed to deserialize CBOR: {:?}", e);
                             }
                         }
                         /*
