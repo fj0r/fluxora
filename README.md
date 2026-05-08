@@ -185,10 +185,10 @@ Components merge by `id` matching. Multiple services can stream to the same page
 - **Error Recovery**: Invalid output triggers automatic rewrite — no "broken UI" from hallucinated code.
 
 ### Protocol Agnosticism & Configurable Codecs
-- **Codec Trait Architecture**: The message layer is decoupled from the serialization format via a generic `Codec` trait, allowing the wire protocol to be specified via configuration.
-- **Bincode Default**: **Bincode** is implemented and enabled as the primary binary protocol. For the current internal/personal use case, the performance benefits outweigh the need for cross-language compatibility.
-- **Extensibility (CBOR)**: Interfaces for alternative protocols like **CBOR** are preserved. If a polyglot frontend (e.g., JS) is introduced later, the system can switch to CBOR without architectural changes.
-- **Separation of Concerns**: The *DSL* remains JSON-structured for AI compatibility and debuggability, while the *transport* uses efficient binary encoding.
+- **Codec Enum Architecture**: The message layer uses `ActiveCodec` enum dispatch (not `Box<dyn Codec>`) since generic trait methods are not object-safe. Wire protocol is specified via configuration.
+- **CBOR Default**: **CBOR** (`ciborium`) is the primary binary protocol. It offers near-bincode performance while being an IETF standard (RFC 8949) with type self-description, partial parsing support, and cross-language compatibility (JS `cbor-x`, etc.).
+- **Bincode Rejected**: Previously considered as default but removed due to serde 2.x incompatibility (v1.x broken, v2.x API unstable), lack of type self-description (Gateway cannot partially parse routing metadata), and no cross-language support. See `docs/decisions/001-reject-bincode-for-cbor.md` for full rationale.
+- **JSON for Debug/AI**: JSON codec is preserved for AI-generated content and debugging — the DSL remains JSON-structured for AI compatibility and human readability, while transport uses efficient binary encoding.
 
 ### Why Event Sourcing?
 - **Decoupling**: Business services are independent Kafka consumers. Add/remove services without touching others.
