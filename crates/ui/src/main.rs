@@ -27,10 +27,11 @@ static STATUS: GlobalSignal<Status> = Global::new(|| {
 
         if let Ok(href) = loc.href()
             && let Ok(href) = web_sys::Url::new(&href)
-            && let Some(t) = href.search_params().get("token")
         {
-            token = Some(t);
-            // Extract codec from URL params if available, otherwise fallback to default
+            if let Some(t) = href.search_params().get("token") {
+                token = Some(t);
+            }
+            // Parse codec independently of token
             if let Some(codec_str) = href.search_params().get("codec") {
                 if let Ok(t) = codec_str.parse::<CodecType>() {
                     codec_type = t;
@@ -40,10 +41,14 @@ static STATUS: GlobalSignal<Status> = Global::new(|| {
             token = Some(t);
         };
     };
+    let codec_str = match codec_type {
+        CodecType::Json => "json",
+        CodecType::Cbor => "cbor",
+    };
     let query = if let Some(token) = token {
-        format!("?token={}", &token)
+        format!("?token={}&codec={}", &token, codec_str)
     } else {
-        "".to_owned()
+        format!("?codec={}", codec_str)
     };
     let url = format!("ws://{}/channel{}", host, query);
     use_status(&url, ActiveCodec::new(codec_type)).expect("connecting failed")

@@ -39,7 +39,7 @@ pub async fn handle_ws<T>(
     state: StateChat<UnboundedSender<T>>,
     config: Arc<ArcSwap<Config>>,
     tmpls: Arc<Tmpls<'static>>,
-    default_codec: ActiveCodec,
+    codec: ActiveCodec,
     session: &SessionInfo,
 ) where
     T: Event<Created>
@@ -57,15 +57,16 @@ pub async fn handle_ws<T>(
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<T>();
     let (term_tx, mut term_rx) = tokio::sync::mpsc::channel(1);
 
-    // Initial hint from configured codec — updated when first frame arrives
-    let hint = default_codec.as_type();
+    // Codec fixed at handshake time
+    let codec = codec.as_type();
+    tracing::info!("WS codec for {}: {:?}", &session.id, codec);
 
     let new_client = Client {
         sender: tx.clone(),
         term: term_tx.clone(),
         info: session.info.clone(),
         created: OffsetDateTime::now_utc(),
-        hint,
+        codec,
     };
     {
         match state.session.entry(session.id.clone()) {
@@ -86,40 +87,33 @@ pub async fn handle_ws<T>(
     context.insert("session_id".into(), session.id.clone().into());
     context.insert("info".into(), Value::Object(session.info.clone()));
 
-    // Greet: use configured codec (before any frame type is detected)
-    if let Some(greet) = config_reader.hooks.get("greet") {
-        for g in greet.iter() {
+    // Greet: send immediately using the codec determined from URL query parameter
+    if let Some(greets) = config_reader.hooks.get("greet") {
+        for g in greets.iter() {
             match g.greet::<T>(&context, tmpls.clone()).await {
                 Ok(payload) => {
-                    if let Some(ws_msg) = encode_ws(hint, &payload) {
+                    if let Some(ws_msg) = encode_ws(codec, &payload) {
                         let _ = sender.send(ws_msg).await;
                     }
                 }
                 Err(e) => {
-                    println!("GreetError => {:?}", e)
+                    tracing::error!("GreetError => {:?}", e);
                 }
             }
         }
     }
 
-    let sid_cloned = session.id.clone();
+    let sid = session.id.clone();
     let hooks = config_reader.hooks.clone();
-    let state_cloned = state.clone();
-    let state_for_send = state.clone();
-    let sid_for_send = session.id.clone();
     drop(config_reader);
 
     let mut recv_task = tokio::spawn(async move {
         #[allow(unused_mut)]
-        let mut sid = sid_cloned;
+        let mut sid = sid;
 
         while let Some(Ok(msg)) = receiver.next().await {
-            // Detect codec from frame type, persist hint for all future sends
             let value = match msg {
                 axum::extract::ws::Message::Text(t) => {
-                    if let Some(mut c) = state_cloned.session.get_mut(&sid) {
-                        c.hint = CodecType::Json;
-                    }
                     match serde_json::from_str::<serde_json::Value>(&t) {
                         Ok(v) => v,
                         Err(e) => {
@@ -129,9 +123,6 @@ pub async fn handle_ws<T>(
                     }
                 }
                 axum::extract::ws::Message::Binary(b) => {
-                    if let Some(mut c) = state_cloned.session.get_mut(&sid) {
-                        c.hint = CodecType::Cbor;
-                    }
                     let mut cursor = std::io::Cursor::new(&b);
                     match ciborium::de::from_reader::<serde_json::Value, _>(&mut cursor) {
                         Ok(v) => v,
@@ -157,9 +148,10 @@ pub async fn handle_ws<T>(
                             let _ = tx.send((sid.clone(), r).into());
                         }
                         Err(e) => {
-                            context.insert("event".into(), ev.into());
-                            context.insert("error".into(), e.to_string().into());
-                            if let Ok(t) = tmpls.get_template("webhook_error.json")?.render(&context) {
+                            let mut err_ctx = Map::new();
+                            err_ctx.insert("event".into(), ev.into());
+                            err_ctx.insert("error".into(), e.to_string().into());
+                            if let Ok(t) = tmpls.get_template("webhook_error.json")?.render(&err_ctx) {
                                 let _ = tx.send(serde_json::from_str(&t)?);
                             }
                         }
@@ -174,19 +166,14 @@ pub async fn handle_ws<T>(
         Okk(())
     });
 
+    let codec_for_send = codec;
     let replaced = Arc::new(Mutex::new(false));
     let r1 = replaced.clone();
     let mut send_task = tokio::spawn(async move {
         loop {
             tokio::select! {
                 Some(msg) = rx.recv() => {
-                    let hint = state_for_send
-                        .session
-                        .get(&sid_for_send)
-                        .map(|c| c.hint)
-                        .unwrap_or(CodecType::Cbor);
-
-                    if let Some(ws_msg) = encode_ws(hint, &msg) {
+                    if let Some(ws_msg) = encode_ws(codec_for_send, &msg) {
                         if sender.send(ws_msg).await.is_err() {
                             break;
                         }

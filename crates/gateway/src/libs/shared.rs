@@ -119,8 +119,8 @@ pub struct Client<T> {
     pub term: tokio::sync::mpsc::Sender<bool>,
     pub created: OffsetDateTime,
     pub info: Info,
-    /// Adaptive codec — set from first WS frame, used for all outgoing messages.
-    pub hint: CodecType,
+    /// Codec determined at handshake from URL query parameter.
+    pub codec: CodecType,
 }
 
 impl<T> Deref for Client<T> {

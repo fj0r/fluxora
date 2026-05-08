@@ -10,7 +10,6 @@ use dioxus::prelude::*;
 use js_sys::wasm_bindgen::JsError;
 use message::codec::ActiveCodec;
 use minijinja::Environment;
-use ciborium::ser::into_writer;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
@@ -25,6 +24,7 @@ static TMPL: LazyLock<RwLock<Environment>> = LazyLock::new(|| {
 #[derive(Clone)]
 pub struct Status {
     pub ws: WebSocketHandle,
+    pub codec: ActiveCodec,
     pub layout: Signal<Brick>,
     pub data: Signal<HashMap<String, Brick>>,
     pub list: Signal<HashMap<String, Vec<Brick>>>,
@@ -38,9 +38,14 @@ impl Status {
             data: content,
         };
 
-        let mut buf = Vec::new();
-        if into_writer(&x, &mut buf).is_ok() {
-            let msg = gloo_net::websocket::Message::Bytes(buf);
+        if let Ok(buf) = self.codec.encode(&x) {
+            let msg = match &self.codec {
+                ActiveCodec::Json => {
+                    let s = String::from_utf8(buf).unwrap_or_default();
+                    gloo_net::websocket::Message::Text(s)
+                }
+                ActiveCodec::Cbor => gloo_net::websocket::Message::Bytes(buf),
+            };
             let _ = self.ws.send(msg).await;
         }
     }
@@ -118,6 +123,7 @@ fn dispatch(
 pub fn use_status(url: &str, codec: ActiveCodec) -> Result<Status, JsError> {
     let ws = use_web_socket(url)?;
     let bytes_signal = ws.message_bytes();
+    let recv_codec = codec.clone();
 
     let mut layout = use_signal::<Brick>(|| {
         Brick::text(brick::Text {
@@ -130,7 +136,7 @@ pub fn use_status(url: &str, codec: ActiveCodec) -> Result<Status, JsError> {
     use_memo(move || {
         let b = &bytes_signal();
         if !b.is_empty() {
-            match codec.decode::<Message<Brick>>(b) {
+            match recv_codec.decode::<Message<Brick>>(b) {
                 Ok(act) => dispatch(act, &mut layout, &mut data, &mut list),
                 Err(err) => {
                     if let Ok(act) = &String::from_utf8(b.clone()) {
@@ -146,6 +152,7 @@ pub fn use_status(url: &str, codec: ActiveCodec) -> Result<Status, JsError> {
 
     Ok(Status {
         ws,
+        codec,
         layout,
         data,
         list,

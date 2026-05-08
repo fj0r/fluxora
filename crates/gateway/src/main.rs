@@ -95,7 +95,16 @@ async fn main() -> Result<()> {
                     };
 
                     let logout = s.hooks.get("logout").unwrap()[0].clone();
-                    let codec = codec_for_router.clone();
+                    let mut codec = codec_for_router.clone();
+                    // Override codec from URL query parameter if provided
+                    tracing::info!("URL query params: {:?}", q);
+                    if let Some(codec_str) = q.get("codec").and_then(|v| v.as_str()) {
+                        tracing::info!("Found codec param: {}", codec_str);
+                        if let Ok(ct) = codec_str.parse::<message::codec::CodecType>() {
+                            codec = ActiveCodec::new(ct);
+                            tracing::info!("Codec set to: {:?}", ct);
+                        }
+                    }
                     drop(s);
                     ws.on_upgrade(async move |socket| {
                         handle_ws(socket, tx, state, config, tmpls.clone(), codec, &a).await;
