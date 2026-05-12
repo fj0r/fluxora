@@ -140,10 +140,7 @@ pub fn use_status(url: &str, codec: ActiveCodec) -> Result<Status, JsError> {
                 Ok(act) => dispatch(act, &mut layout, &mut data, &mut list),
                 Err(err) => {
                     if let Ok(act) = &String::from_utf8(b.clone()) {
-                        dioxus::logger::tracing::info!(
-                            "deserialize error: {:#?}\n{}",
-                            err, act
-                        )
+                        dioxus::logger::tracing::info!("deserialize error: {:#?}\n{}", err, act)
                     }
                 }
             }

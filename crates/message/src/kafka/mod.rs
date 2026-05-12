@@ -71,13 +71,12 @@ where
                 }
                 let _delivery_status = producer
                     .send(
-                        FutureRecord::to(&cfg.topic)
-                            .payload(&buf)
-                            .key("")
-                            .headers(OwnedHeaders::new().insert(Header {
+                        FutureRecord::to(&cfg.topic).payload(&buf).key("").headers(
+                            OwnedHeaders::new().insert(Header {
                                 key: "",
                                 value: Some(""),
-                            })),
+                            }),
+                        ),
                         Duration::from_secs(0),
                     )
                     .await;

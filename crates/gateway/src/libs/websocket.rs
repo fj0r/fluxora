@@ -1,12 +1,12 @@
 use super::config::{Config, Hook};
-use super::shared::{encode_ws, Client, StateChat};
+use super::shared::{Client, StateChat, encode_ws};
 use super::template::Tmpls;
-use message::codec::{ActiveCodec, CodecType};
 use anyhow::{Ok as Okk, Result};
 use arc_swap::ArcSwap;
 use axum::extract::ws::WebSocket;
 use dashmap::Entry;
 use futures::{sink::SinkExt, stream::StreamExt};
+use message::codec::{ActiveCodec, CodecType};
 use message::{
     Event,
     session::{Session, SessionInfo},
@@ -142,7 +142,9 @@ pub async fn handle_ws<T>(
                 && let Some(wh) = hooks.get(ev)
             {
                 for h in wh {
-                    if h.disable { continue; }
+                    if h.disable {
+                        continue;
+                    }
                     match h.variant.handle(to_value(&chat_msg)?).await {
                         Ok(r) => {
                             let _ = tx.send((sid.clone(), r).into());
@@ -151,7 +153,9 @@ pub async fn handle_ws<T>(
                             let mut err_ctx = Map::new();
                             err_ctx.insert("event".into(), ev.into());
                             err_ctx.insert("error".into(), e.to_string().into());
-                            if let Ok(t) = tmpls.get_template("webhook_error.json")?.render(&err_ctx) {
+                            if let Ok(t) =
+                                tmpls.get_template("webhook_error.json")?.render(&err_ctx)
+                            {
                                 let _ = tx.send(serde_json::from_str(&t)?);
                             }
                         }

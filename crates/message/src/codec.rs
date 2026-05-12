@@ -1,4 +1,4 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -74,10 +74,13 @@ impl ActiveCodec {
 
     pub fn decode<T: DeserializeOwned>(&self, bytes: &[u8]) -> Result<T, CodecError> {
         match self {
-            Self::Json => serde_json::from_slice(bytes).map_err(|e| CodecError::Decode(e.to_string())),
+            Self::Json => {
+                serde_json::from_slice(bytes).map_err(|e| CodecError::Decode(e.to_string()))
+            }
             Self::Cbor => {
                 let mut cursor = std::io::Cursor::new(bytes);
-                ciborium::de::from_reader(&mut cursor).map_err(|e| CodecError::Decode(e.to_string()))
+                ciborium::de::from_reader(&mut cursor)
+                    .map_err(|e| CodecError::Decode(e.to_string()))
             }
         }
     }

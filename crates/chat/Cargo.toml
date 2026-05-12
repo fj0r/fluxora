@@ -35,6 +35,7 @@ tracing-subscriber.workspace = true
 url.workspace = true
 urlencoding.workspace = true
 arc-swap.workspace = true
+pyo3.workspace = true
 
 [[bin]]
 name = "chat"

@@ -18,7 +18,10 @@ use time::OffsetDateTime;
 use tokio::sync::{RwLock, mpsc::UnboundedSender};
 
 /// Encode a value and wrap it in the appropriate WS frame type (Text/JSON vs Binary/CBOR).
-pub fn encode_ws<T: serde::Serialize>(codec: CodecType, value: &T) -> Option<axum::extract::ws::Message> {
+pub fn encode_ws<T: serde::Serialize>(
+    codec: CodecType,
+    value: &T,
+) -> Option<axum::extract::ws::Message> {
     let bytes = ActiveCodec::new(codec).encode(value).ok()?;
     Some(match codec {
         CodecType::Json => {
